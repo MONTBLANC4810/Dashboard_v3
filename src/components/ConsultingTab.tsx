@@ -37,7 +37,7 @@ export function ConsultingTab() {
   const [inhouseFilter, setInhouseFilter] = useState<'all' | 'has' | 'none'>('all');
   const [ojtFilter, setOjtFilter] = useState<'all' | 'has' | 'none'>('all');
   
-  // [신규 추가] 관할지부 전북 O/X 필터 상태 (전체:all, 전북임:yes, 전북아님:no)
+  // 관할지부 전북 O/X 필터 상태 (전체:all, 전북임:yes, 전북아님:no)
   const [jeonbukFilter, setJeonbukFilter] = useState<'all' | 'yes' | 'no'>('all');
 
   // 기간별 필터 함수
@@ -146,7 +146,7 @@ export function ConsultingTab() {
       if (r.ksCert) record.ksCert = true;
       if (r.isoCert) record.isoCert = true;
       
-      // 관할지부에 '전북'이 포함되어 있으면 전북 업체로 판별
+      // 엑셀에서 가장 오른쪽에 존재하던 '관할' 필드로부터 전북 판별
       if (r.branchOffice && r.branchOffice.includes('전북')) {
         record.isJeonbuk = true;
       }
@@ -227,13 +227,65 @@ export function ConsultingTab() {
       if (ojtFilter === 'has' && !item.hasOjt) return false;
       if (ojtFilter === 'none' && item.hasOjt) return false;
 
-      // 5. [신규 추가] 관할지부 전북 필터 (O:yes / X:no / 전체:all)
+      // 5. 관할지부 전북 필터 (O:yes / X:no / 전체:all)
       if (jeonbukFilter === 'yes' && !item.isJeonbuk) return false;
       if (jeonbukFilter === 'no' && item.isJeonbuk) return false;
 
       return true;
     });
   }, [recommendations, searchTerm, publicFilter, inhouseFilter, ojtFilter, jeonbukFilter]);
+
+  // [신규 가공] 테이블 행 단위 분할 가공 (고객사명 / 인증현황 / 사업 구분 / 세부내역)
+  const tableRows = useMemo(() => {
+    const rows: {
+      customerName: string;
+      isoCert: boolean;
+      isJeonbuk: boolean;
+      businessType: '공개교육' | '사내교육' | '현장교육(OJT)';
+      salesAmount: number;
+      materials: { name: string; count: number }[];
+    }[] = [];
+
+    filteredRecs.forEach(item => {
+      // 공개교육 행 추가 (이력이 존재하는 경우에만)
+      if (item.publicSales > 0) {
+        rows.push({
+          customerName: item.customerName,
+          isoCert: item.isoCert,
+          isJeonbuk: item.isJeonbuk,
+          businessType: '공개교육',
+          salesAmount: item.publicSales,
+          materials: item.topPublicMaterials,
+        });
+      }
+
+      // 사내교육 행 추가
+      if (item.inhouseSales > 0) {
+        rows.push({
+          customerName: item.customerName,
+          isoCert: item.isoCert,
+          isJeonbuk: item.isJeonbuk,
+          businessType: '사내교육',
+          salesAmount: item.inhouseSales,
+          materials: item.topInhouseMaterials,
+        });
+      }
+
+      // 현장교육(OJT) 행 추가
+      if (item.ojtSales > 0) {
+        rows.push({
+          customerName: item.customerName,
+          isoCert: item.isoCert,
+          isJeonbuk: item.isJeonbuk,
+          businessType: '현장교육(OJT)',
+          salesAmount: item.ojtSales,
+          materials: item.topOjtMaterials,
+        });
+      }
+    });
+
+    return rows;
+  }, [filteredRecs]);
 
   return (
     <div className="animate-fade-in space-y-6 text-slate-700">
@@ -475,7 +527,7 @@ export function ConsultingTab() {
           </div>
         </div>
 
-        {/* 4단 토글 필터 영역 (관할지부 전북 필터 추가 및 O/X 텍스트 교체) */}
+        {/* 4단 토글 필터 영역 (관할지부 전북 포함) */}
         <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/80 mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
           
           {/* 공개교육 필터 */}
@@ -544,7 +596,7 @@ export function ConsultingTab() {
             </div>
           </div>
 
-          {/* [신규 추가] 관할지부 전북 필터 */}
+          {/* 관할지부 전북 필터 */}
           <div className="space-y-2">
             <span className="text-xs font-bold text-slate-500 block">관할지부: 전북</span>
             <div className="flex bg-slate-200/60 p-1 rounded-lg">
@@ -567,7 +619,7 @@ export function ConsultingTab() {
           </div>
         </div>
 
-        {/* 제안 테이블 (사업이력 삭제, ISO 단독매핑, 사업구분-세부내역 줄바꿈 통합구조) */}
+        {/* 제안 테이블 (4열 구조: 고객사명 / 인증현황 / 사업 구분 / 세부내역) */}
         <div className="overflow-x-auto rounded-xl border border-slate-150">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -575,24 +627,25 @@ export function ConsultingTab() {
                 <th className="px-6 py-4">고객사명</th>
                 <th className="px-6 py-4 text-center">인증 현황</th>
                 <th className="px-6 py-4">사업 구분</th>
+                <th className="px-6 py-4">세부내역</th>
               </tr>
             </thead>
             <tbody className="text-sm divide-y divide-slate-100">
-              {filteredRecs.length > 0 ? (
-                filteredRecs.map((item) => (
-                  <tr key={item.customerName} className="hover:bg-slate-50/50 transition-colors">
+              {tableRows.length > 0 ? (
+                tableRows.map((row, index) => (
+                  <tr key={`${row.customerName}_${row.businessType}_${index}`} className="hover:bg-slate-50/50 transition-colors">
                     
-                    {/* 고객사명 */}
+                    {/* 1. 고객사명 */}
                     <td className="px-6 py-4 font-bold text-slate-800">
                       <div className="flex items-center gap-2">
                         <Building2 className="w-4 h-4 text-slate-400" />
-                        {item.customerName}
+                        {row.customerName}
                       </div>
                     </td>
                     
-                    {/* [변경] 인증현황: KS는 제거하고 오직 ISO 보유 상태만 배지 처리(미보유는 공란) */}
+                    {/* 2. 인증현황 (ISO 단독, 없을 시 공백) */}
                     <td className="px-6 py-4 text-center">
-                      {item.isoCert ? (
+                      {row.isoCert ? (
                         <span className="text-[11px] px-2.5 py-0.5 rounded-full font-bold bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center gap-1 w-24 mx-auto">
                           <ShieldCheck className="w-3.5 h-3.5" />
                           ISO 보유
@@ -602,86 +655,52 @@ export function ConsultingTab() {
                       )}
                     </td>
 
-                    {/* [변경] 사업 구분 (사업이력과 주요내용을 하나로 병합 후 세부내역 줄바꿈 표기) */}
+                    {/* 3. 사업 구분 (사업명 및 매출금액 결합) */}
                     <td className="px-6 py-4">
-                      <div className="space-y-4 my-1">
-                        
-                        {/* 공개교육 이력 */}
-                        {item.publicSales > 0 && (
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs font-extrabold text-blue-600 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded">
-                                [공개교육] {formatToThousand(item.publicSales)}
-                              </span>
-                            </div>
-                            {item.topPublicMaterials.length > 0 && (
-                              <div className="pl-2 flex flex-col gap-1">
-                                <span className="text-[10px] text-slate-400 font-extrabold tracking-wide uppercase">📋 세부 내역</span>
-                                <div className="flex flex-wrap gap-1.5">
-                                  {item.topPublicMaterials.map((mat: { name: string, count: number }) => (
-                                    <span key={mat.name} className="px-2 py-0.5 rounded bg-slate-50 border border-slate-200 text-slate-600 text-[11px] font-medium">
-                                      {mat.name} <span className="text-[10px] text-slate-400 font-bold">({mat.count}회)</span>
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        {/* 사내교육 이력 */}
-                        {item.inhouseSales > 0 && (
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs font-extrabold text-indigo-600 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded">
-                                [사내교육] {formatToThousand(item.inhouseSales)}
-                              </span>
-                            </div>
-                            {item.topInhouseMaterials.length > 0 && (
-                              <div className="pl-2 flex flex-col gap-1">
-                                <span className="text-[10px] text-slate-400 font-extrabold tracking-wide uppercase">📋 세부 내역</span>
-                                <div className="flex flex-wrap gap-1.5">
-                                  {item.topInhouseMaterials.map((mat: { name: string, count: number }) => (
-                                    <span key={mat.name} className="px-2 py-0.5 rounded bg-slate-50 border border-slate-200 text-slate-600 text-[11px] font-medium">
-                                      {mat.name} <span className="text-[10px] text-slate-400 font-bold">({mat.count}회)</span>
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        {/* 현장교육(OJT) 이력 */}
-                        {item.ojtSales > 0 && (
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs font-extrabold text-amber-600 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded">
-                                [현장교육(OJT)] {formatToThousand(item.ojtSales)}
-                              </span>
-                            </div>
-                            {item.topOjtMaterials.length > 0 && (
-                              <div className="pl-2 flex flex-col gap-1">
-                                <span className="text-[10px] text-slate-400 font-extrabold tracking-wide uppercase">📋 세부 내역</span>
-                                <div className="flex flex-wrap gap-1.5">
-                                  {item.topOjtMaterials.map((mat: { name: string, count: number }) => (
-                                    <span key={mat.name} className="px-2 py-0.5 rounded bg-slate-50 border border-slate-200 text-slate-600 text-[11px] font-medium">
-                                      {mat.name} <span className="text-[10px] text-slate-400 font-bold">({mat.count}회)</span>
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                      </div>
+                      {row.businessType === '공개교육' && (
+                        <span className="text-xs font-extrabold text-blue-600 bg-blue-50 border border-blue-100 px-2.5 py-1 rounded-lg">
+                          [공개교육] {formatToThousand(row.salesAmount)}
+                        </span>
+                      )}
+                      {row.businessType === '사내교육' && (
+                        <span className="text-xs font-extrabold text-indigo-600 bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-lg">
+                          [사내교육] {formatToThousand(row.salesAmount)}
+                        </span>
+                      )}
+                      {row.businessType === '현장교육(OJT)' && (
+                        <span className="text-xs font-extrabold text-amber-600 bg-amber-50 border border-amber-100 px-2.5 py-1 rounded-lg">
+                          [현장교육(OJT)] {formatToThousand(row.salesAmount)}
+                        </span>
+                      )}
                     </td>
+
+                    {/* 4. 세부내역 (교육과정명) */}
+                    <td className="px-6 py-4">
+                      {row.materials.length > 0 ? (
+                        <div className="flex flex-col gap-1 py-0.5">
+                          <span className="text-[10px] text-slate-400 font-extrabold tracking-wide uppercase">📋 세부 내역</span>
+                          <div className="flex flex-wrap gap-1.5 max-w-md">
+                            {row.materials.map((mat) => (
+                              <span 
+                                key={mat.name} 
+                                className="inline-flex items-center px-2 py-0.5 rounded bg-slate-50 border border-slate-200 text-slate-600 text-[11px] font-medium"
+                              >
+                                {mat.name}
+                                <span className="ml-1 text-[9px] bg-slate-200/80 px-1 py-0.1 rounded text-slate-500 font-extrabold">{mat.count}회</span>
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-slate-400 italic">세부 내역 없음</span>
+                      )}
+                    </td>
+
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={3} className="px-6 py-10 text-center text-slate-400 font-medium bg-slate-50/20">
+                  <td colSpan={4} className="px-6 py-10 text-center text-slate-400 font-medium bg-slate-50/20">
                     조건에 일치하는 대상 기업이 존재하지 않습니다.
                   </td>
                 </tr>
