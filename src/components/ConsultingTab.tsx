@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useDashboard } from '../context/DashboardContext';
 import { formatPercent } from '../utils/format';
-import { Building2, BookOpen, ArrowRightLeft, Sparkles, Search, HelpCircle, ShieldCheck } from 'lucide-react';
+import { Building2, BookOpen, ArrowRightLeft, Sparkles, Search, HelpCircle, ShieldCheck, ChevronDown, ChevronUp } from 'lucide-react';
 
 // 숫자를 천원 단위 표기로 변환하는 포맷터 함수
 function formatToThousand(value: number): string {
@@ -18,6 +18,9 @@ export function ConsultingTab() {
     const years = Array.from(new Set(salesData.map(r => r.year))).sort((a, b) => b - a);
     return years.length > 0 ? years : [2026, 2025, 2024];
   }, [salesData]);
+
+  // [신규 추가] 상단 AI 경영분석 영역 접고 펴는 토글 상태 (기본값: true - 펼쳐진 상태)
+  const [isBriefingExpanded, setIsBriefingExpanded] = useState<boolean>(true);
 
   // 경영분석 브리핑 기간 설정 (기간 1 - 기준 기간)
   const [p1StartYear, setP1StartYear] = useState<number>(availableYears[1] || 2025);
@@ -170,7 +173,7 @@ export function ConsultingTab() {
       isoCert: boolean;
       isJeonbuk: boolean; // 관할지부 전북 여부
       branchOffice: string; // 화면 표시용 지부 명칭
-      memberStatus: string; // [신규 추가] 비고 열 매핑용 회원 등급 상태
+      memberStatus: string; // 비고 열 매핑용 회원 등급 상태
     }> = {};
 
     filteredSalesForRec.forEach(r => {
@@ -296,227 +299,252 @@ export function ConsultingTab() {
   return (
     <div className="animate-fade-in space-y-6 text-slate-700">
       
-      {/* ===================== 경영분석 브리핑 세션 ===================== */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        
-        {/* 기간 선택 컨트롤러 */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between">
-          <div>
-            <h3 className="text-base font-bold text-slate-800 mb-5 flex items-center gap-2">
-              <ArrowRightLeft className="w-5 h-5 text-indigo-600" />
-              분석 대상 기간 설정
-            </h3>
-            
-            {/* 기간 1 */}
-            <div className="space-y-3 mb-6">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">비교 기간 1 (기준)</label>
-              <div className="grid grid-cols-2 gap-3">
-                <select
-                  value={p1StartYear}
-                  onChange={(e) => {
-                    setP1StartYear(Number(e.target.value));
-                    if (p1EndYear < Number(e.target.value)) setP1EndYear(Number(e.target.value));
-                  }}
-                  className="px-3 py-2 rounded-xl text-sm font-medium border border-slate-200 bg-slate-50 text-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                >
-                  {availableYears.map(y => <option key={y} value={y}>{y}년</option>)}
-                </select>
-                <select
-                  value={p1StartMonth}
-                  onChange={(e) => setP1StartMonth(Number(e.target.value))}
-                  className="px-3 py-2 rounded-xl text-sm font-medium border border-slate-200 bg-slate-50 text-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                >
-                  {Array.from({ length: 12 }, (_, i) => i + 1).map(m => <option key={m} value={m}>{m}월</option>)}
-                </select>
-              </div>
-              <div className="text-center text-xs text-slate-400 font-bold">~</div>
-              <div className="grid grid-cols-2 gap-3">
-                <select
-                  value={p1EndYear}
-                  onChange={(e) => setP1EndYear(Number(e.target.value))}
-                  className="px-3 py-2 rounded-xl text-sm font-medium border border-slate-200 bg-slate-50 text-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                >
-                  {availableYears.filter(y => y >= p1StartYear).map(y => <option key={y} value={y}>{y}년</option>)}
-                </select>
-                <select
-                  value={p1EndMonth}
-                  onChange={(e) => setP1EndMonth(Number(e.target.value))}
-                  className="px-3 py-2 rounded-xl text-sm font-medium border border-slate-200 bg-slate-50 text-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                >
-                  {Array.from({ length: 12 }, (_, i) => i + 1).map(m => <option key={m} value={m}>{m}월</option>)}
-                </select>
-              </div>
-            </div>
-
-            <hr className="my-5 border-dashed border-slate-200" />
-
-            {/* 기간 2 */}
-            <div className="space-y-3">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">비교 기간 2 (대비)</label>
-              <div className="grid grid-cols-2 gap-3">
-                <select
-                  value={p2StartYear}
-                  onChange={(e) => {
-                    setP2StartYear(Number(e.target.value));
-                    if (p2EndYear < Number(e.target.value)) setP2EndYear(Number(e.target.value));
-                  }}
-                  className="px-3 py-2 rounded-xl text-sm font-medium border border-slate-200 bg-slate-50 text-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                >
-                  {availableYears.map(y => <option key={y} value={y}>{y}년</option>)}
-                </select>
-                <select
-                  value={p2StartMonth}
-                  onChange={(e) => setP2StartMonth(Number(e.target.value))}
-                  className="px-3 py-2 rounded-xl text-sm font-medium border border-slate-200 bg-slate-50 text-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                >
-                  {Array.from({ length: 12 }, (_, i) => i + 1).map(m => <option key={m} value={m}>{m}월</option>)}
-                </select>
-              </div>
-              <div className="text-center text-xs text-slate-400 font-bold">~</div>
-              <div className="grid grid-cols-2 gap-3">
-                <select
-                  value={p2EndYear}
-                  onChange={(e) => setP2EndYear(Number(e.target.value))}
-                  className="px-3 py-2 rounded-xl text-sm font-medium border border-slate-200 bg-slate-50 text-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                >
-                  {availableYears.filter(y => y >= p2StartYear).map(y => <option key={y} value={y}>{y}년</option>)}
-                </select>
-                <select
-                  value={p2EndMonth}
-                  onChange={(e) => setP2EndMonth(Number(e.target.value))}
-                  className="px-3 py-2 rounded-xl text-sm font-medium border border-slate-200 bg-slate-50 text-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                >
-                  {Array.from({ length: 12 }, (_, i) => i + 1).map(m => <option key={m} value={m}>{m}월</option>)}
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-6 text-xs text-slate-500 leading-relaxed bg-slate-50 p-4 rounded-xl border border-slate-100 flex gap-2 items-start">
-            <HelpCircle className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
-            <span>두 연월 범위를 설정하면, 우측의 통계 보고서가 동적으로 계산되어 갱신됩니다.</span>
-          </div>
+      {/* ===================== [신규 구현] AI 경영분석 아코디언 헤더 바 ===================== */}
+      <div 
+        onClick={() => setIsBriefingExpanded(!isBriefingExpanded)}
+        className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition-all select-none"
+      >
+        <div className="flex items-center gap-2.5">
+          <Sparkles className="w-5 h-5 text-indigo-600 animate-pulse" />
+          <span className="text-base font-bold text-slate-800">AI 경영분석 브리핑 요약</span>
+          <span className="text-xs px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-600 font-semibold border border-indigo-100">
+            기간 설정 및 통계 보고서
+          </span>
         </div>
-
-        {/* AI 분석 리포트 요약 카드 */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between xl:col-span-2">
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-indigo-600" />
-                경영분석 브리핑
-              </h3>
-              <span className="text-xs px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-600 font-bold border border-indigo-100">
-                실시간 분석 리포트
-              </span>
-            </div>
-
-            {/* 주요 지표 박스 */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4.5">
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-                <span className="text-[11px] font-semibold text-slate-500 block mb-0.5">기준 기간 매출 (P1)</span>
-                <span className="text-base font-bold text-slate-800">{formatToThousand(briefingReport.rev1)}</span>
-              </div>
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-                <span className="text-[11px] font-semibold text-slate-500 block mb-0.5">대비 기간 매출 (P2)</span>
-                <span className="text-base font-bold text-slate-800">{formatToThousand(briefingReport.rev2)}</span>
-              </div>
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-                <span className="text-[11px] font-semibold text-slate-500 block mb-0.5">매출 변화율</span>
-                <div className="flex items-baseline gap-2">
-                  <span className={`text-lg font-extrabold ${briefingReport.diff >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-                    {formatPercent(briefingReport.rate)}
-                  </span>
-                  <span className="text-[11px] text-slate-500 font-medium">
-                    ({briefingReport.diff >= 0 ? '+' : ''}{formatToThousand(briefingReport.diff)})
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* 줄글 브리핑 리포트 */}
-            <div className="space-y-3.5 text-[13px] text-slate-600 leading-relaxed">
-              <p>
-                선택하신 기준 기간(P1: {p1StartYear}년 {p1StartMonth}월 ~ {p1EndYear}년 {p1EndMonth}월) 대비 
-                비교 기간(P2: {p2StartYear}년 {p2StartMonth}월 ~ {p2EndYear}년 {p2EndMonth}월)의 매출 변화를 분석한 결과, 
-                총매출액은 기존 <strong className="text-slate-800">{formatToThousand(briefingReport.rev1)}</strong>에서 
-                <strong className="text-slate-800"> {formatToThousand(briefingReport.rev2)}</strong>로 
-                <strong className={`mx-1 ${briefingReport.diff >= 0 ? 'text-blue-600' : 'text-red-600'}`}>{Math.abs(briefingReport.rate).toFixed(1)}% {briefingReport.diff >= 0 ? '상승' : '하락'}</strong>
-                하였습니다.
-              </p>
-
-              {/* 부서별 실적 어휘 보정 */}
-              {briefingReport.topDept && (
-                <p>
-                  부서별 실적 추이의 경우, 
-                  {briefingReport.topDept.diff >= 0 ? (
-                    <span>이전 대비 가장 큰 폭의 매출 성장을 일구어낸 부서는 <strong className="text-blue-600">{briefingReport.topDept.name}</strong>로, <strong className="text-slate-800">{formatToThousand(briefingReport.topDept.diff)}</strong>의 실적 성장을 보이며 영업을 주도했습니다.</span>
-                  ) : (
-                    <span>모든 부서의 실적이 감소세를 나타낸 가운데, <strong className="text-blue-600">{briefingReport.topDept.name}</strong> 부서가 이전 대비 <strong className="text-slate-800">{formatToThousand(Math.abs(briefingReport.topDept.diff))}</strong>의 실적 감소 수준에 그쳐 하락 폭을 가장 최소화했습니다.</span>
-                  )}
-                  {briefingReport.worstDept && briefingReport.worstDept.diff < 0 && (
-                    <span> 반면, <strong className="text-red-600">{briefingReport.worstDept.name}</strong> 부서는 이전 대비 <strong className="text-slate-800">{formatToThousand(Math.abs(briefingReport.worstDept.diff))}</strong>의 실적 하락을 나타내며 가장 큰 하락 폭을 보였습니다.</span>
-                  )}
-                </p>
-              )}
-
-              {/* 자재내역(품목)별 실적 추이 브리핑 */}
-              {briefingReport.topMat && (
-                <p>
-                  교육 사업 및 품목 단위(자재내역 기준) 분석 결과, 
-                  {briefingReport.topMat.diff >= 0 ? (
-                    <span>가장 눈에 띄는 매출 신장을 기록한 교육 품목은 <strong className="text-blue-600">{briefingReport.topMat.name}</strong>(이전 대비 {formatToThousand(briefingReport.topMat.diff)} 증가)으로 <strong className="text-blue-600">매출 성장을 주도했습니다.</strong></span>
-                  ) : (
-                    <span>전반적인 교육 품목 수요가 위축된 가운데, <strong className="text-blue-600">{briefingReport.topMat.name}</strong>과정의 실적 하락폭({formatToThousand(Math.abs(briefingReport.topMat.diff))} 감소)이 가장 선방한 것으로 나타났습니다.</span>
-                  )}
-                  {briefingReport.worstMat && briefingReport.worstMat.diff < 0 && (
-                    <span> 반면, 매출 실적이 가장 크게 뒷걸음질 친 교육 품목은 <strong className="text-red-600">{briefingReport.worstMat.name}</strong>(이전 대비 {formatToThousand(Math.abs(briefingReport.worstMat.diff))} 감소)으로 영업 및 판촉 보완이 시급합니다.</span>
-                  )}
-                </p>
-              )}
-
-              {briefingReport.topCusts.length > 0 && (
-                <div>
-                  <p>
-                    고객사 단위로는 
-                    {briefingReport.topCusts.map((c, i) => (
-                      <span key={c.name}>
-                        {i > 0 ? ', ' : ''}<strong className="text-slate-800">{c.name}</strong>(증가 {formatToThousand(c.diff)})
-                      </span>
-                    ))}
-                    업체가 성장을 견인하였습니다.
-                    {briefingReport.dropCusts.length > 0 && (
-                      <span> 한편, 
-                        {briefingReport.dropCusts.map((c, i) => (
-                          <span key={c.name}>
-                            {i > 0 ? ', ' : ''}<strong className="text-slate-800">{c.name}</strong>(감소 {formatToThousand(Math.abs(c.diff))})
-                          </span>
-                        ))}
-                        기업은 수강 및 심사 이용 총액이 이전보다 큰 폭으로 감소하여 밀착 관리가 요구됩니다.
-                      </span>
-                    )}
-                  </p>
-                </div>
-              )}
-
-              <p>
-                인증 기업(KS 또는 ISO 인증 보유)들의 매출 점유율을 대조한 결과, 
-                기존 <strong className="text-slate-800">{briefingReport.certRatio1.toFixed(1)}%</strong>에서 
-                대비 기간에는 <strong className="text-slate-800">{briefingReport.certRatio2.toFixed(1)}%</strong>로 
-                <strong className="text-indigo-600"> {(briefingReport.certRatio2 - briefingReport.certRatio1).toFixed(1)}%p {briefingReport.certRatio2 >= briefingReport.certRatio1 ? '증가' : '감소'}</strong>
-                하였습니다.
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-4.5 flex items-center gap-2 text-xs text-slate-500 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-            <Sparkles className="w-4 h-4 text-indigo-500 animate-pulse" />
-            이 브리핑은 엑셀 데이터 분석 모델에 의해 동적으로 즉각 렌더링되었습니다.
-          </div>
+        
+        <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-600 bg-indigo-50/60 px-3 py-1.5 rounded-xl border border-indigo-100 hover:bg-indigo-100/50 transition-all">
+          <span>{isBriefingExpanded ? '경영분석 접기' : '경영분석 펼치기'}</span>
+          {isBriefingExpanded ? (
+            <ChevronUp className="w-4 h-4" />
+          ) : (
+            <ChevronDown className="w-4 h-4" />
+          )}
         </div>
       </div>
 
-      {/* ===================== 신규 사업 발굴 대상 세션 ===================== */}
+      {/* ===================== 경영분석 브리핑 세션 (접고 펼치기 조건부 렌더링) ===================== */}
+      {isBriefingExpanded && (
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 animate-slide-down">
+          
+          {/* 기간 선택 컨트롤러 */}
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between">
+            <div>
+              <h3 className="text-base font-bold text-slate-800 mb-5 flex items-center gap-2">
+                <ArrowRightLeft className="w-5 h-5 text-indigo-600" />
+                분석 대상 기간 설정
+              </h3>
+              
+              {/* 기간 1 */}
+              <div className="space-y-3 mb-6">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">비교 기간 1 (기준)</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <select
+                    value={p1StartYear}
+                    onChange={(e) => {
+                      setP1StartYear(Number(e.target.value));
+                      if (p1EndYear < Number(e.target.value)) setP1EndYear(Number(e.target.value));
+                    }}
+                    className="px-3 py-2 rounded-xl text-sm font-medium border border-slate-200 bg-slate-50 text-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  >
+                    {availableYears.map(y => <option key={y} value={y}>{y}년</option>)}
+                  </select>
+                  <select
+                    value={p1StartMonth}
+                    onChange={(e) => setP1StartMonth(Number(e.target.value))}
+                    className="px-3 py-2 rounded-xl text-sm font-medium border border-slate-200 bg-slate-50 text-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  >
+                    {Array.from({ length: 12 }, (_, i) => i + 1).map(m => <option key={m} value={m}>{m}월</option>)}
+                  </select>
+                </div>
+                <div className="text-center text-xs text-slate-400 font-bold">~</div>
+                <div className="grid grid-cols-2 gap-3">
+                  <select
+                    value={p1EndYear}
+                    onChange={(e) => setP1EndYear(Number(e.target.value))}
+                    className="px-3 py-2 rounded-xl text-sm font-medium border border-slate-200 bg-slate-50 text-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  >
+                    {availableYears.filter(y => y >= p1StartYear).map(y => <option key={y} value={y}>{y}년</option>)}
+                  </select>
+                  <select
+                    value={p1EndMonth}
+                    onChange={(e) => setP1EndMonth(Number(e.target.value))}
+                    className="px-3 py-2 rounded-xl text-sm font-medium border border-slate-200 bg-slate-50 text-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  >
+                    {Array.from({ length: 12 }, (_, i) => i + 1).map(m => <option key={m} value={m}>{m}월</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <hr className="my-5 border-dashed border-slate-200" />
+
+              {/* 기간 2 */}
+              <div className="space-y-3">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">비교 기간 2 (대비)</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <select
+                    value={p2StartYear}
+                    onChange={(e) => {
+                      setP2StartYear(Number(e.target.value));
+                      if (p2EndYear < Number(e.target.value)) setP2EndYear(Number(e.target.value));
+                    }}
+                    className="px-3 py-2 rounded-xl text-sm font-medium border border-slate-200 bg-slate-50 text-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  >
+                    {availableYears.map(y => <option key={y} value={y}>{y}년</option>)}
+                  </select>
+                  <select
+                    value={p2StartMonth}
+                    onChange={(e) => setP2StartMonth(Number(e.target.value))}
+                    className="px-3 py-2 rounded-xl text-sm font-medium border border-slate-200 bg-slate-50 text-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  >
+                    {Array.from({ length: 12 }, (_, i) => i + 1).map(m => <option key={m} value={m}>{m}월</option>)}
+                  </select>
+                </div>
+                <div className="text-center text-xs text-slate-400 font-bold">~</div>
+                <div className="grid grid-cols-2 gap-3">
+                  <select
+                    value={p2EndYear}
+                    onChange={(e) => setP2EndYear(Number(e.target.value))}
+                    className="px-3 py-2 rounded-xl text-sm font-medium border border-slate-200 bg-slate-50 text-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  >
+                    {availableYears.filter(y => y >= p2StartYear).map(y => <option key={y} value={y}>{y}년</option>)}
+                  </select>
+                  <select
+                    value={p2EndMonth}
+                    onChange={(e) => setP2EndMonth(Number(e.target.value))}
+                    className="px-3 py-2 rounded-xl text-sm font-medium border border-slate-200 bg-slate-50 text-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  >
+                    {Array.from({ length: 12 }, (_, i) => i + 1).map(m => <option key={m} value={m}>{m}월</option>)}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 text-xs text-slate-500 leading-relaxed bg-slate-50 p-4 rounded-xl border border-slate-100 flex gap-2 items-start">
+              <HelpCircle className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+              <span>두 연월 범위를 설정하면, 우측의 통계 보고서가 동적으로 계산되어 갱신됩니다.</span>
+            </div>
+          </div>
+
+          {/* AI 분석 리포트 요약 카드 */}
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between xl:col-span-2">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-indigo-600" />
+                  경영분석 브리핑
+                </h3>
+                <span className="text-xs px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-600 font-bold border border-indigo-100">
+                  실시간 분석 리포트
+                </span>
+              </div>
+
+              {/* 주요 지표 박스 */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4.5">
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                  <span className="text-[11px] font-semibold text-slate-500 block mb-0.5">기준 기간 매출 (P1)</span>
+                  <span className="text-base font-bold text-slate-800">{formatToThousand(briefingReport.rev1)}</span>
+                </div>
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                  <span className="text-[11px] font-semibold text-slate-500 block mb-0.5">대비 기간 매출 (P2)</span>
+                  <span className="text-base font-bold text-slate-800">{formatToThousand(briefingReport.rev2)}</span>
+                </div>
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                  <span className="text-[11px] font-semibold text-slate-500 block mb-0.5">매출 변화율</span>
+                  <div className="flex items-baseline gap-2">
+                    <span className={`text-lg font-extrabold ${briefingReport.diff >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                      {formatPercent(briefingReport.rate)}
+                    </span>
+                    <span className="text-[11px] text-slate-500 font-medium">
+                      ({briefingReport.diff >= 0 ? '+' : ''}{formatToThousand(briefingReport.diff)})
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 줄글 브리핑 리포트 */}
+              <div className="space-y-3.5 text-[13px] text-slate-600 leading-relaxed">
+                <p>
+                  선택하신 기준 기간(P1: {p1StartYear}년 {p1StartMonth}월 ~ {p1EndYear}년 {p1EndMonth}월) 대비 
+                  비교 기간(P2: {p2StartYear}년 {p2StartMonth}월 ~ {p2EndYear}년 {p2EndMonth}월)의 매출 변화를 분석한 결과, 
+                  총매출액은 기존 <strong className="text-slate-800">{formatToThousand(briefingReport.rev1)}</strong>에서 
+                  <strong className="text-slate-800"> {formatToThousand(briefingReport.rev2)}</strong>로 
+                  <strong className={`mx-1 ${briefingReport.diff >= 0 ? 'text-blue-600' : 'text-red-600'}`}>{Math.abs(briefingReport.rate).toFixed(1)}% {briefingReport.diff >= 0 ? '상승' : '하락'}</strong>
+                  하였습니다.
+                </p>
+
+                {/* 부서별 실적 어휘 보정 */}
+                {briefingReport.topDept && (
+                  <p>
+                    부서별 실적 추이의 경우, 
+                    {briefingReport.topDept.diff >= 0 ? (
+                      <span>이전 대비 가장 큰 폭의 매출 성장을 일구어낸 부서는 <strong className="text-blue-600">{briefingReport.topDept.name}</strong>로, <strong className="text-slate-800">{formatToThousand(briefingReport.topDept.diff)}</strong>의 실적 성장을 보이며 영업을 주도했습니다.</span>
+                    ) : (
+                      <span>모든 부서의 실적이 감소세를 나타낸 가운데, <strong className="text-blue-600">{briefingReport.topDept.name}</strong> 부서가 이전 대비 <strong className="text-slate-800">{formatToThousand(Math.abs(briefingReport.topDept.diff))}</strong>의 실적 감소 수준에 그쳐 하락 폭을 가장 최소화했습니다.</span>
+                    )}
+                    {briefingReport.worstDept && briefingReport.worstDept.diff < 0 && (
+                      <span> 반면, <strong className="text-red-600">{briefingReport.worstDept.name}</strong> 부서는 이전 대비 <strong className="text-slate-800">{formatToThousand(Math.abs(briefingReport.worstDept.diff))}</strong>의 실적 하락을 나타내며 가장 큰 하락 폭을 보였습니다.</span>
+                    )}
+                  </p>
+                )}
+
+                {/* 자재내역(품목)별 실적 추이 브리핑 */}
+                {briefingReport.topMat && (
+                  <p>
+                    교육 사업 및 품목 단위(자재내역 기준) 분석 결과, 
+                    {briefingReport.topMat.diff >= 0 ? (
+                      <span>가장 눈에 띄는 매출 신장을 기록한 교육 품목은 <strong className="text-blue-600">{briefingReport.topMat.name}</strong>(이전 대비 {formatToThousand(briefingReport.topMat.diff)} 증가)으로 <strong className="text-blue-600">매출 성장을 주도했습니다.</strong></span>
+                    ) : (
+                      <span>전반적인 교육 품목 수요가 위축된 가운데, <strong className="text-blue-600">{briefingReport.topMat.name}</strong>과정의 실적 하락폭({formatToThousand(Math.abs(briefingReport.topMat.diff))} 감소)이 가장 선방한 것으로 나타났습니다.</span>
+                    )}
+                    {briefingReport.worstMat && briefingReport.worstMat.diff < 0 && (
+                      <span> 반면, 매출 실적이 가장 크게 뒷걸음질 친 교육 품목은 <strong className="text-red-600">{briefingReport.worstMat.name}</strong>(이전 대비 {formatToThousand(Math.abs(briefingReport.worstMat.diff))} 감소)으로 영업 및 판촉 보완이 시급합니다.</span>
+                    )}
+                  </p>
+                )}
+
+                {briefingReport.topCusts.length > 0 && (
+                  <div>
+                    <p>
+                      고객사 단위로는 
+                      {briefingReport.topCusts.map((c, i) => (
+                        <span key={c.name}>
+                          {i > 0 ? ', ' : ''}<strong className="text-slate-800">{c.name}</strong>(증가 {formatToThousand(c.diff)})
+                        </span>
+                      ))}
+                      업체가 성장을 견인하였습니다.
+                      {briefingReport.dropCusts.length > 0 && (
+                        <span> 한편, 
+                          {briefingReport.dropCusts.map((c, i) => (
+                            <span key={c.name}>
+                              {i > 0 ? ', ' : ''}<strong className="text-slate-800">{c.name}</strong>(감소 {formatToThousand(Math.abs(c.diff))})
+                            </span>
+                          ))}
+                          기업은 수강 및 심사 이용 총액이 이전보다 큰 폭으로 감소하여 밀착 관리가 요구됩니다.
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                )}
+
+                <p>
+                  인증 기업(KS 또는 ISO 인증 보유)들의 매출 점유율을 대조한 결과, 
+                  기존 <strong className="text-slate-800">{briefingReport.certRatio1.toFixed(1)}%</strong>에서 
+                  대비 기간에는 <strong className="text-slate-800">{briefingReport.certRatio2.toFixed(1)}%</strong>로 
+                  <strong className="text-indigo-600"> {(briefingReport.certRatio2 - briefingReport.certRatio1).toFixed(1)}%p {briefingReport.certRatio2 >= briefingReport.certRatio1 ? '증가' : '감소'}</strong>
+                  하였습니다.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4.5 flex items-center gap-2 text-xs text-slate-500 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+              <Sparkles className="w-4 h-4 text-indigo-500 animate-pulse" />
+              이 브리핑은 엑셀 데이터 분석 모델에 의해 동적으로 즉각 렌더링되었습니다.
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===================== 신규 사업 발굴 대상 세션 (언제나 고정) ===================== */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
         
         {/* 타이틀 및 검색 헤더 (신규 조회 기간 필터 추가) */}
@@ -677,7 +705,7 @@ export function ConsultingTab() {
           </div>
         </div>
 
-        {/* 제안 테이블 (5열 레이아웃: 고객사명 / 인증현황 / 사업 구분 / 세부내역 / 비고, 제목행 가운데 정렬, 가로 구분선 divide-slate-200/90 적용) */}
+        {/* 제안 테이블 */}
         <div className="overflow-x-auto rounded-xl border border-slate-200">
           <table className="w-full text-left border-collapse table-fixed">
             <thead>
@@ -692,7 +720,6 @@ export function ConsultingTab() {
             <tbody className="text-sm divide-y divide-slate-200/90">
               {filteredRecs.length > 0 ? (
                 filteredRecs.flatMap((item) => {
-                  // 활성화된(금액 > 0) 사업구분 수집
                   const activeRows = [];
                   if (item.publicSales > 0) {
                     activeRows.push({
@@ -730,14 +757,13 @@ export function ConsultingTab() {
 
                   const rowSpan = activeRows.length;
 
-                  // rowSpan을 적용하여 <tr>로 쪼개어 수직 정렬을 완전하게 일치
                   return activeRows.map((row, rowIndex) => {
                     const isFirst = rowIndex === 0;
 
                     return (
                       <tr key={`${item.customerName}_${row.type}`} className="hover:bg-slate-50/50 transition-colors">
                         
-                        {/* 1. 고객사명 (rowSpan 적용, 완벽한 가운데 수직 정렬) */}
+                        {/* 1. 고객사명 */}
                         {isFirst && (
                           <td 
                             rowSpan={rowSpan} 
@@ -750,7 +776,7 @@ export function ConsultingTab() {
                           </td>
                         )}
 
-                        {/* 2. 인증현황 (rowSpan 적용, 수직 정렬) */}
+                        {/* 2. 인증현황 */}
                         {isFirst && (
                           <td 
                             rowSpan={rowSpan} 
@@ -776,14 +802,14 @@ export function ConsultingTab() {
                           </td>
                         )}
 
-                        {/* 3. 사업 구분 (각 구분별 1행씩 렌더링되며, align-middle에 의해 완벽한 수직 중앙 정치) */}
+                        {/* 3. 사업 구분 */}
                         <td className="px-6 py-4 text-center align-middle border-r border-slate-100">
                           <span className={`text-xs font-extrabold px-2.5 py-1 rounded-lg border ${row.colorClass}`}>
                             [{row.label}] {formatToThousand(row.sales)}
                           </span>
                         </td>
 
-                        {/* 4. 세부내역 (각 구분별 1행씩 세로배치 렌더링) */}
+                        {/* 4. 세부내역 */}
                         <td className="px-6 py-4 align-middle border-r border-slate-100">
                           <div className="flex flex-col gap-1.5 items-start">
                             {row.materials.map((mat) => (
@@ -798,7 +824,7 @@ export function ConsultingTab() {
                           </div>
                         </td>
 
-                        {/* 5. 비고 (rowSpan 적용, 회원사 여부 매핑) */}
+                        {/* 5. 비고 */}
                         {isFirst && (
                           <td 
                             rowSpan={rowSpan} 
