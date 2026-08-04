@@ -20,7 +20,7 @@ const WidgetWrapper = ({ children }: { children: React.ReactNode }) => (
 
 export const Dashboard: React.FC = () => {
   const { isInitialLoad, salesData } = useDashboard();
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'compare' | 'compare_treemap' | 'consulting'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'compare' | 'compare_treemap' | 'consulting'>('consulting');
 
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden font-sans">
@@ -43,6 +43,17 @@ export const Dashboard: React.FC = () => {
             {/* 탭 전환 버튼 (데이터가 업로드된 후에만 노출) */}
             {!isInitialLoad && salesData.length > 0 && (
               <div className="flex bg-slate-200/60 p-1 rounded-lg">
+                <button
+                  onClick={() => setActiveTab('consulting')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+                    activeTab === 'consulting'
+                      ? 'bg-white text-slate-900 shadow-sm'
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  <Sparkles size={14} className="text-indigo-500" />
+                  AI 경영분석 & 고객 발굴
+                </button>
                 <button
                   onClick={() => setActiveTab('dashboard')}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
@@ -75,17 +86,6 @@ export const Dashboard: React.FC = () => {
                 >
                   <LayoutGrid size={14} />
                   트리맵 비교
-                </button>
-                <button
-                  onClick={() => setActiveTab('consulting')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
-                    activeTab === 'consulting'
-                      ? 'bg-white text-slate-900 shadow-sm'
-                      : 'text-slate-500 hover:text-slate-800'
-                  }`}
-                >
-                  <Sparkles size={14} className="text-indigo-500" />
-                  AI 경영분석 & 고객 발굴
                 </button>
               </div>
             )}
