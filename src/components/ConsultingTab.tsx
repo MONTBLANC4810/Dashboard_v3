@@ -612,16 +612,15 @@ export function ConsultingTab() {
           </div>
         </div>
 
-        {/* 제안 테이블 (5열 레이아웃: 고객사명 / 관할지부 / 인증현황 / 사업 구분 / 세부내역, 가로 구분선 divide-slate-200/90 적용) */}
+        {/* 제안 테이블 (4열 레이아웃: 고객사명 / 인증현황 / 사업 구분 / 세부내역, 가로 구분선 divide-slate-200/90 적용) */}
         <div className="overflow-x-auto rounded-xl border border-slate-200">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-50 border-b border-slate-200">
-                <th className="px-6 py-4">고객사명</th>
-                <th className="px-6 py-4 text-center">관할지부</th>
-                <th className="px-6 py-4 text-center">인증 현황</th>
-                <th className="px-6 py-4">사업 구분</th>
-                <th className="px-6 py-4">세부내역</th>
+              <tr className="text-sm font-bold text-slate-600 bg-slate-50 border-b border-slate-200">
+                <th className="w-[25%] px-6 py-4">고객사명</th>
+                <th className="w-[15%] px-4 py-4 text-center">인증 현황</th>
+                <th className="w-[22%] px-6 py-4">사업 구분</th>
+                <th className="w-[38%] px-6 py-4">세부내역</th>
               </tr>
             </thead>
             <tbody className="text-sm divide-y divide-slate-200/90">
@@ -629,21 +628,16 @@ export function ConsultingTab() {
                 filteredRecs.map((item) => (
                   <tr key={item.customerName} className="hover:bg-slate-50/50 transition-colors">
                     
-                    {/* 1. 고객사명 */}
-                    <td className="px-6 py-4 font-bold text-slate-800">
+                    {/* 1. 고객사명 (헤더와 폰트 크기 일치) */}
+                    <td className="px-6 py-4 font-semibold text-slate-800">
                       <div className="flex items-center gap-2">
                         <Building2 className="w-4 h-4 text-slate-400" />
                         {item.customerName}
                       </div>
                     </td>
-
-                    {/* 2. [신규 추가] 관할지부 (디버깅 검증용 열) */}
-                    <td className="px-6 py-4 text-center font-semibold text-slate-700">
-                      {item.branchOffice}
-                    </td>
                     
-                    {/* 3. 인증현황 */}
-                    <td className="px-6 py-4 text-center">
+                    {/* 2. 인증현황 */}
+                    <td className="px-4 py-4 text-center">
                       {item.isoCert ? (
                         <span className="text-[11px] px-2.5 py-0.5 rounded-full font-bold bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center gap-1 w-24 mx-auto">
                           <ShieldCheck className="w-3.5 h-3.5" />
@@ -654,7 +648,7 @@ export function ConsultingTab() {
                       )}
                     </td>
 
-                    {/* 4. 사업 구분 (사내교육은 초록색(emerald) 적용, 현장교육은 표기 단순화) */}
+                    {/* 3. 사업 구분 */}
                     <td className="px-6 py-4">
                       <div className="flex flex-col gap-4">
                         
@@ -685,55 +679,55 @@ export function ConsultingTab() {
                       </div>
                     </td>
 
-                    {/* 5. 세부내역 (📋 세부 내역 라벨 완전 삭제) */}
+                    {/* 4. 세부내역 (각 사업구분 성격과 대응하는 음영 매칭 적용) */}
                     <td className="px-6 py-4">
                       <div className="flex flex-col gap-4">
                         
-                        {/* 공개교육 세부내역 */}
+                        {/* 공개교육 세부내역 (파란색 음영 배지) */}
                         {item.publicSales > 0 && (
                           <div className="min-h-[4rem] flex flex-col justify-center gap-1">
                             <div className="flex flex-wrap gap-1.5 max-w-md">
                               {item.topPublicMaterials.map((mat) => (
                                 <span 
                                   key={mat.name} 
-                                  className="inline-flex items-center px-2 py-0.5 rounded bg-slate-50 border border-slate-200 text-slate-600 text-[11px] font-medium"
+                                  className="inline-flex items-center px-2 py-0.5 rounded bg-blue-50/60 border border-blue-200 text-blue-700 text-[11px] font-medium"
                                 >
                                   {mat.name}
-                                  <span className="ml-1 text-[9px] bg-slate-200/80 px-1 py-0.1 rounded text-slate-500 font-extrabold">{mat.count}회</span>
+                                  <span className="ml-1 text-[9px] bg-blue-100 px-1 py-0.1 rounded text-blue-600 font-extrabold">{mat.count}회</span>
                                 </span>
                               ))}
                             </div>
                           </div>
                         )}
 
-                        {/* 사내교육 세부내역 */}
+                        {/* 사내교육 세부내역 (초록색 음영 배지) */}
                         {item.inhouseSales > 0 && (
                           <div className="min-h-[4rem] flex flex-col justify-center gap-1">
                             <div className="flex flex-wrap gap-1.5 max-w-md">
                               {item.topInhouseMaterials.map((mat) => (
                                 <span 
                                   key={mat.name} 
-                                  className="inline-flex items-center px-2 py-0.5 rounded bg-slate-50 border border-slate-200 text-slate-600 text-[11px] font-medium"
+                                  className="inline-flex items-center px-2 py-0.5 rounded bg-emerald-50/60 border border-emerald-200 text-emerald-700 text-[11px] font-medium"
                                 >
                                   {mat.name}
-                                  <span className="ml-1 text-[9px] bg-slate-200/80 px-1 py-0.1 rounded text-slate-500 font-extrabold">{mat.count}회</span>
+                                  <span className="ml-1 text-[9px] bg-emerald-100 px-1 py-0.1 rounded text-emerald-600 font-extrabold">{mat.count}회</span>
                                 </span>
                               ))}
                             </div>
                           </div>
                         )}
 
-                        {/* 현장교육 세부내역 */}
+                        {/* 현장교육 세부내역 (노란색 음영 배지) */}
                         {item.ojtSales > 0 && (
                           <div className="min-h-[4rem] flex flex-col justify-center gap-1">
                             <div className="flex flex-wrap gap-1.5 max-w-md">
                               {item.topOjtMaterials.map((mat) => (
                                 <span 
                                   key={mat.name} 
-                                  className="inline-flex items-center px-2 py-0.5 rounded bg-slate-50 border border-slate-200 text-slate-600 text-[11px] font-medium"
+                                  className="inline-flex items-center px-2 py-0.5 rounded bg-amber-50/60 border border-amber-200 text-amber-700 text-[11px] font-medium"
                                 >
                                   {mat.name}
-                                  <span className="ml-1 text-[9px] bg-slate-200/80 px-1 py-0.1 rounded text-slate-500 font-extrabold">{mat.count}회</span>
+                                  <span className="ml-1 text-[9px] bg-amber-100 px-1 py-0.1 rounded text-amber-600 font-extrabold">{mat.count}회</span>
                                 </span>
                               ))}
                             </div>
@@ -747,7 +741,7 @@ export function ConsultingTab() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={5} className="px-6 py-10 text-center text-slate-400 font-medium bg-slate-50/20">
+                  <td colSpan={4} className="px-6 py-10 text-center text-slate-400 font-medium bg-slate-50/20">
                     조건에 일치하는 대상 기업이 존재하지 않습니다.
                   </td>
                 </tr>
