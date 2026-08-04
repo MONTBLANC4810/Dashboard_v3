@@ -12,6 +12,7 @@ export interface SalesRecord {
   ksCert: boolean; // KS인증 (O/X)
   isoCert: boolean; // ISO인증 (O/X)
   memberStatus: string; // 회원내역
+  branchOffice?: string; // 관할지부
 }
 
 export interface TargetRecord {

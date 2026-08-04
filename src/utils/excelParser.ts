@@ -35,6 +35,7 @@ export const parseExcelData = async (file: File): Promise<{ sales: SalesRecord[]
               ksCert: String(row['KS인증'] || '').trim().toUpperCase() === 'O',
               isoCert: String(row['ISO인증'] || '').trim().toUpperCase() === 'O',
               memberStatus: String(row['회원내역'] || '').trim(),
+              branchOffice: String(row['관할지부'] || '').trim(),
             };
           }).filter(r => r.year > 0);
         }
