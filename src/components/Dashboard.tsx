@@ -85,7 +85,7 @@ export const Dashboard: React.FC = () => {
                   }`}
                 >
                   <Sparkles size={14} className="text-indigo-500" />
-                  AI 경영분석 & 컨설팅 제안
+                  AI 경영분석 & 고객 발굴
                 </button>
               </div>
             )}
@@ -130,7 +130,7 @@ export const Dashboard: React.FC = () => {
             <TreemapTab />
           </div>
         ) : (
-          /* AI 경영분석 & 컨설팅 제안 탭 */
+          /* AI 경영분석 & 고객 발굴 탭 */
           <div className="flex-1 min-h-0 w-full bg-slate-50 p-6 overflow-y-auto custom-scrollbar">
             <ConsultingTab />
           </div>
