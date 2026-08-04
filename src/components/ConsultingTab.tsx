@@ -734,9 +734,9 @@ export function ConsultingTab() {
             <thead>
               <tr className="text-sm font-bold text-slate-600 bg-slate-50 border-b border-slate-200">
                 <th className="w-[20%] px-6 py-4 text-center">고객사명</th>
-                <th className="w-[10%] px-4 py-4 text-center">인증 현황</th>
                 <th className="w-[18%] px-6 py-4 text-center">사업 구분</th>
                 <th className="w-[42%] px-6 py-4 text-center">세부내역</th>
+                <th className="w-[10%] px-4 py-4 text-center">인증 현황</th>
                 <th className="w-[10%] px-4 py-4 text-center">비고</th>
               </tr>
             </thead>
@@ -799,40 +799,14 @@ export function ConsultingTab() {
                           </td>
                         )}
 
-                        {/* 2. 인증현황 */}
-                        {isFirst && (
-                          <td 
-                            rowSpan={rowSpan} 
-                            className="px-4 py-4 text-center align-middle border-r border-slate-100"
-                          >
-                            <div className="flex flex-col gap-1.5 items-center justify-center">
-                              {item.ksCert && (
-                                <span className="text-[11px] px-2.5 py-0.5 rounded-full font-bold bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center gap-1 w-24 mx-auto">
-                                  <ShieldCheck className="w-3.5 h-3.5 text-blue-500" />
-                                  KS 보유
-                                </span>
-                              )}
-                              {item.isoCert && (
-                                <span className="text-[11px] px-2.5 py-0.5 rounded-full font-bold bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center gap-1 w-24 mx-auto">
-                                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                                  ISO 보유
-                                </span>
-                              )}
-                              {!item.ksCert && !item.isoCert && (
-                                <span className="text-slate-400 text-xs italic">-</span>
-                              )}
-                            </div>
-                          </td>
-                        )}
-
-                        {/* 3. 사업 구분 */}
+                        {/* 2. 사업 구분 */}
                         <td className="px-6 py-4 text-center align-middle border-r border-slate-100">
                           <span className={`text-xs font-extrabold px-2.5 py-1 rounded-lg border ${row.colorClass}`}>
                             [{row.label}] {formatToThousand(row.sales)}
                           </span>
                         </td>
 
-                        {/* 4. 세부내역 (연도별 그룹화 및 스타일 리밸런싱 패치) */}
+                        {/* 3. 세부내역 (연도별 그룹화 및 스타일 리밸런싱 패치) */}
                         <td className="pl-5 pr-6 py-4 align-middle border-r border-slate-100">
                           <div className="flex flex-col gap-3">
                             {row.materials.map((group, gIdx) => (
@@ -862,6 +836,32 @@ export function ConsultingTab() {
                             ))}
                           </div>
                         </td>
+
+                        {/* 4. 인증현황 */}
+                        {isFirst && (
+                          <td 
+                            rowSpan={rowSpan} 
+                            className="px-4 py-4 text-center align-middle border-r border-slate-100"
+                          >
+                            <div className="flex flex-col gap-1.5 items-center justify-center">
+                              {item.ksCert && (
+                                <span className="text-[11px] px-2.5 py-0.5 rounded-full font-bold bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center gap-1 w-24 mx-auto">
+                                  <ShieldCheck className="w-3.5 h-3.5 text-blue-500" />
+                                  KS 보유
+                                </span>
+                              )}
+                              {item.isoCert && (
+                                <span className="text-[11px] px-2.5 py-0.5 rounded-full font-bold bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center gap-1 w-24 mx-auto">
+                                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                                  ISO 보유
+                                </span>
+                              )}
+                              {!item.ksCert && !item.isoCert && (
+                                <span className="text-slate-400 text-xs italic">-</span>
+                              )}
+                            </div>
+                          </td>
+                        )}
 
                         {/* 5. 비고 */}
                         {isFirst && (
