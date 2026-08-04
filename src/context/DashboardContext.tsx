@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import type { SalesRecord, TargetRecord, FilterState } from '../types';
+import { target2026 } from '../data/target2026';
 
 interface DashboardContextType {
   salesData: SalesRecord[];
@@ -31,14 +32,18 @@ const DashboardContext = createContext<DashboardContextType | undefined>(undefin
 
 export const DashboardProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [salesData, setSalesData] = useState<SalesRecord[]>([]);
-  const [targetData, setTargetData] = useState<TargetRecord[]>([]);
+  const [targetData, setTargetData] = useState<TargetRecord[]>(target2026);
   const [filters, setFilters] = useState<FilterState>(initialFilters);
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   const updateData = (sales: SalesRecord[], targets: TargetRecord[]) => {
     setSalesData(sales);
-    setTargetData(targets);
+    if (targets && targets.length > 0) {
+      setTargetData(targets);
+    } else {
+      setTargetData(target2026);
+    }
     setIsInitialLoad(false);
   };
 
