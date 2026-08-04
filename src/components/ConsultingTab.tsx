@@ -187,8 +187,8 @@ export function ConsultingTab() {
       const budget = r.budgetType || '';
       const mat = r.materialDetails ? r.materialDetails.toString().trim() : '';
 
-      // [엄격 복원] 'KS교육(공개)' 등은 제외하고 오직 예산목에 '공개교육', '공개연수'만 포함되도록 원복
-      if (budget.includes('공개교육') || budget.includes('공개연수')) {
+      // [엄격 복원] 오직 예산목이 '공개교육'인 경우만 포함 (공개연수 및 기타 교육 제외)
+      if (budget === '공개교육') {
         record.publicSales += r.salesAmount;
         if (mat) record.publicMaterials[mat] = (record.publicMaterials[mat] || 0) + 1;
       } else if (budget.includes('사내교육') || budget.includes('위탁연수') || budget.includes('이러닝(사내)') || budget.includes('KS교육(사내)')) {
