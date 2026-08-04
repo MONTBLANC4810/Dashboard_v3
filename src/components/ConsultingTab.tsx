@@ -19,8 +19,8 @@ export function ConsultingTab() {
     return years.length > 0 ? years : [2026, 2025, 2024];
   }, [salesData]);
 
-  // [신규 추가] 상단 AI 경영분석 영역 접고 펴는 토글 상태 (기본값: true - 펼쳐진 상태)
-  const [isBriefingExpanded, setIsBriefingExpanded] = useState<boolean>(true);
+  // [신규 추가] 상단 AI 경영분석 영역 접고 펴는 토글 상태 (기본값: false - 접혀진 상태)
+  const [isBriefingExpanded, setIsBriefingExpanded] = useState<boolean>(false);
 
   // 경영분석 브리핑 기간 설정 (기간 1 - 기준 기간)
   const [p1StartYear, setP1StartYear] = useState<number>(availableYears[1] || 2025);
