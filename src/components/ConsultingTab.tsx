@@ -76,7 +76,7 @@ export function ConsultingTab() {
     const topDept = deptDiffs.length > 0 ? deptDiffs[0] : null; 
     const worstDept = deptDiffs.length > 0 ? deptDiffs[deptDiffs.length - 1] : null;
 
-    // 자재내역(품목)별 매출 합산 및 증감 계산 [추가]
+    // 자재내역(품목)별 매출 합산 및 증감 계산
     const matMap1: Record<string, number> = {};
     const matMap2: Record<string, number> = {};
     data1.forEach(r => {
@@ -368,10 +368,10 @@ export function ConsultingTab() {
           </div>
         </div>
 
-        {/* AI 분석 리포트 요약 카드 */}
+        {/* AI 분석 리포트 요약 카드 (지표 요약 박스 슬림화 및 텍스트 폰트 축소 적용) */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between xl:col-span-2">
           <div>
-            <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center justify-between mb-4">
               <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-indigo-600" />
                 경영분석 브리핑
@@ -381,31 +381,31 @@ export function ConsultingTab() {
               </span>
             </div>
 
-            {/* 주요 지표 박스 */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-                <span className="text-xs font-semibold text-slate-500 block mb-1">기준 기간 매출 (P1)</span>
-                <span className="text-lg font-bold text-slate-800">{formatToThousand(briefingReport.rev1)}</span>
+            {/* 주요 지표 박스 (크기 및 폰트 슬림화) */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4.5">
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                <span className="text-[11px] font-semibold text-slate-500 block mb-0.5">기준 기간 매출 (P1)</span>
+                <span className="text-base font-bold text-slate-800">{formatToThousand(briefingReport.rev1)}</span>
               </div>
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-                <span className="text-xs font-semibold text-slate-500 block mb-1">대비 기간 매출 (P2)</span>
-                <span className="text-lg font-bold text-slate-800">{formatToThousand(briefingReport.rev2)}</span>
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                <span className="text-[11px] font-semibold text-slate-500 block mb-0.5">대비 기간 매출 (P2)</span>
+                <span className="text-base font-bold text-slate-800">{formatToThousand(briefingReport.rev2)}</span>
               </div>
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-                <span className="text-xs font-semibold text-slate-500 block mb-1">매출 변화율</span>
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                <span className="text-[11px] font-semibold text-slate-500 block mb-0.5">매출 변화율</span>
                 <div className="flex items-baseline gap-2">
-                  <span className={`text-xl font-extrabold ${briefingReport.diff >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                  <span className={`text-lg font-extrabold ${briefingReport.diff >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
                     {formatPercent(briefingReport.rate)}
                   </span>
-                  <span className="text-xs text-slate-500 font-medium">
+                  <span className="text-[11px] text-slate-500 font-medium">
                     ({briefingReport.diff >= 0 ? '+' : ''}{formatToThousand(briefingReport.diff)})
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* 줄글 브리핑 리포트 (음수 성장 어휘 수정 및 품목별 실적추이 신설) */}
-            <div className="space-y-4 text-sm text-slate-600 leading-relaxed max-h-[300px] overflow-y-auto pr-2">
+            {/* 줄글 브리핑 리포트 (글자 크기 축소 및 단락 간격 조절로 스크롤 완전 방지) */}
+            <div className="space-y-3.5 text-[13px] text-slate-600 leading-relaxed">
               <p>
                 선택하신 기준 기간(P1: {p1StartYear}년 {p1StartMonth}월 ~ {p1EndYear}년 {p1EndMonth}월) 대비 
                 비교 기간(P2: {p2StartYear}년 {p2StartMonth}월 ~ {p2EndYear}년 {p2EndMonth}월)의 매출 변화를 분석한 결과, 
@@ -430,12 +430,12 @@ export function ConsultingTab() {
                 </p>
               )}
 
-              {/* [신설] 자재내역(품목)별 실적 추이 브리핑 */}
+              {/* 자재내역(품목)별 실적 추이 브리핑 (우뚝 섰습니다 표현 순화) */}
               {briefingReport.topMat && (
                 <p>
                   교육 사업 및 품목 단위(자재내역 기준) 분석 결과, 
                   {briefingReport.topMat.diff >= 0 ? (
-                    <span>가장 눈에 띄는 매출 신장을 기록한 교육 품목은 <strong className="text-blue-600">{briefingReport.topMat.name}</strong>(이전 대비 {formatToThousand(briefingReport.topMat.diff)} 증가)으로 핵심 매출 품목으로 우뚝 섰습니다.</span>
+                    <span>가장 눈에 띄는 매출 신장을 기록한 교육 품목은 <strong className="text-blue-600">{briefingReport.topMat.name}</strong>(이전 대비 {formatToThousand(briefingReport.topMat.diff)} 증가)으로 <strong className="text-blue-600">매출 성장을 주도했습니다.</strong></span>
                   ) : (
                     <span>전반적인 교육 품목 수요가 위축된 가운데, <strong className="text-blue-600">{briefingReport.topMat.name}</strong>과정의 실적 하락폭({formatToThousand(Math.abs(briefingReport.topMat.diff))} 감소)이 가장 선방한 것으로 나타났습니다.</span>
                   )}
@@ -474,13 +474,13 @@ export function ConsultingTab() {
                 기존 <strong className="text-slate-800">{briefingReport.certRatio1.toFixed(1)}%</strong>에서 
                 대비 기간에는 <strong className="text-slate-800">{briefingReport.certRatio2.toFixed(1)}%</strong>로 
                 <strong className="text-indigo-600"> {(briefingReport.certRatio2 - briefingReport.certRatio1).toFixed(1)}%p {briefingReport.certRatio2 >= briefingReport.certRatio1 ? '증가' : '감소'}</strong>
-                하였습니다. 이는 시장에서 공신력 있는 인증 마크의 가치와 매출 귀속도가 여전히 주요 변수로 작동하고 있음을 방증합니다.
+                하였습니다.
               </p>
             </div>
           </div>
 
-          <div className="mt-6 flex items-center gap-2 text-xs text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-100">
-            <Sparkles className="w-4 h-4 text-indigo-500" />
+          <div className="mt-4.5 flex items-center gap-2 text-xs text-slate-500 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+            <Sparkles className="w-4 h-4 text-indigo-500 animate-pulse" />
             이 브리핑은 엑셀 데이터 분석 모델에 의해 동적으로 즉각 렌더링되었습니다.
           </div>
         </div>
@@ -606,7 +606,7 @@ export function ConsultingTab() {
           </div>
         </div>
 
-        {/* 제안 테이블 (1고객사당 1개 행으로 다시 병합 렌더링) */}
+        {/* 제안 테이블 (1고객사당 1개 행 구성, 셀 내부 세부내역 중복 문자 '📋 세부 내역' 라벨 삭제) */}
         <div className="overflow-x-auto rounded-xl border border-slate-150">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -622,7 +622,7 @@ export function ConsultingTab() {
                 filteredRecs.map((item) => (
                   <tr key={item.customerName} className="hover:bg-slate-50/50 transition-colors">
                     
-                    {/* 1. 고객사명 (고유하게 1회 노출) */}
+                    {/* 1. 고객사명 */}
                     <td className="px-6 py-4 font-bold text-slate-800">
                       <div className="flex items-center gap-2">
                         <Building2 className="w-4 h-4 text-slate-400" />
@@ -630,7 +630,7 @@ export function ConsultingTab() {
                       </div>
                     </td>
                     
-                    {/* 2. 인증현황 (ISO 단독, 없을 시 공백) */}
+                    {/* 2. 인증현황 */}
                     <td className="px-6 py-4 text-center">
                       {item.isoCert ? (
                         <span className="text-[11px] px-2.5 py-0.5 rounded-full font-bold bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center gap-1 w-24 mx-auto">
@@ -642,7 +642,7 @@ export function ConsultingTab() {
                       )}
                     </td>
 
-                    {/* 3. 사업 구분 (금액 통합 / 수직 나열 구조화) */}
+                    {/* 3. 사업 구분 (금액 결합형 수직 병합) */}
                     <td className="px-6 py-4">
                       <div className="flex flex-col gap-4">
                         
@@ -673,14 +673,13 @@ export function ConsultingTab() {
                       </div>
                     </td>
 
-                    {/* 4. 세부내역 (각 사업 구분 높이에 매치하여 1:1 병합 렌더링) */}
+                    {/* 4. 세부내역 (중복 라벨 텍스트 완전 배제) */}
                     <td className="px-6 py-4">
                       <div className="flex flex-col gap-4">
                         
                         {/* 공개교육 세부내역 */}
                         {item.publicSales > 0 && (
                           <div className="min-h-[4rem] flex flex-col justify-center gap-1">
-                            <span className="text-[10px] text-slate-400 font-extrabold tracking-wide uppercase">📋 세부 내역</span>
                             <div className="flex flex-wrap gap-1.5 max-w-md">
                               {item.topPublicMaterials.map((mat) => (
                                 <span 
@@ -698,7 +697,6 @@ export function ConsultingTab() {
                         {/* 사내교육 세부내역 */}
                         {item.inhouseSales > 0 && (
                           <div className="min-h-[4rem] flex flex-col justify-center gap-1">
-                            <span className="text-[10px] text-slate-400 font-extrabold tracking-wide uppercase">📋 세부 내역</span>
                             <div className="flex flex-wrap gap-1.5 max-w-md">
                               {item.topInhouseMaterials.map((mat) => (
                                 <span 
@@ -716,7 +714,6 @@ export function ConsultingTab() {
                         {/* 현장교육(OJT) 세부내역 */}
                         {item.ojtSales > 0 && (
                           <div className="min-h-[4rem] flex flex-col justify-center gap-1">
-                            <span className="text-[10px] text-slate-400 font-extrabold tracking-wide uppercase">📋 세부 내역</span>
                             <div className="flex flex-wrap gap-1.5 max-w-md">
                               {item.topOjtMaterials.map((mat) => (
                                 <span 

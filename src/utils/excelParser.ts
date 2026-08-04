@@ -36,9 +36,8 @@ export const parseExcelData = async (file: File): Promise<{ sales: SalesRecord[]
               isoCert: String(row['ISO인증'] || '').trim().toUpperCase() === 'O',
               memberStatus: String(row['회원내역'] || '').trim(),
               branchOffice: (() => {
-                const rowKeys = Object.keys(row);
-                const lastKey = rowKeys.length > 0 ? rowKeys[rowKeys.length - 1] : '';
-                return lastKey ? String(row[lastKey] || '').trim() : '';
+                const targetKey = Object.keys(row).find(k => k.includes('관할지부') || k.includes('지부') || k.includes('관할'));
+                return targetKey ? String(row[targetKey] || '').trim() : '';
               })(),
             };
           }).filter(r => r.year > 0);
