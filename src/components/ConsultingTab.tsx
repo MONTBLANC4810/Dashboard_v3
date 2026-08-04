@@ -749,10 +749,10 @@ export function ConsultingTab() {
                     <td className="px-6 py-4">
                       <div className="flex flex-col gap-4">
                         
-                        {/* 공개교육 세부내역 (파란색 음영 배지) */}
+                        {/* 공개교육 세부내역 (파란색 음영 배지 - 세로 1열) */}
                         {item.publicSales > 0 && (
                           <div className="min-h-[4rem] flex flex-col justify-center gap-1">
-                            <div className="flex flex-wrap gap-1.5 max-w-none">
+                            <div className="flex flex-col gap-1.5 items-start">
                               {item.topPublicMaterials.map((mat) => (
                                 <span 
                                   key={mat.name} 
@@ -766,10 +766,10 @@ export function ConsultingTab() {
                           </div>
                         )}
 
-                        {/* 사내교육 세부내역 (초록색 음영 배지) */}
+                        {/* 사내교육 세부내역 (초록색 음영 배지 - 세로 1열) */}
                         {item.inhouseSales > 0 && (
                           <div className="min-h-[4rem] flex flex-col justify-center gap-1">
-                            <div className="flex flex-wrap gap-1.5 max-w-none">
+                            <div className="flex flex-col gap-1.5 items-start">
                               {item.topInhouseMaterials.map((mat) => (
                                 <span 
                                   key={mat.name} 
@@ -783,10 +783,10 @@ export function ConsultingTab() {
                           </div>
                         )}
 
-                        {/* 현장교육 세부내역 (노란색 음영 배지) */}
+                        {/* 현장교육 세부내역 (노란색 음영 배지 - 세로 1열) */}
                         {item.ojtSales > 0 && (
                           <div className="min-h-[4rem] flex flex-col justify-center gap-1">
-                            <div className="flex flex-wrap gap-1.5 max-w-none">
+                            <div className="flex flex-col gap-1.5 items-start">
                               {item.topOjtMaterials.map((mat) => (
                                 <span 
                                   key={mat.name} 
