@@ -182,14 +182,14 @@ export function ConsultingTab() {
       const budget = r.budgetType || '';
       const mat = r.materialDetails ? r.materialDetails.toString().trim() : '';
 
-      // 공개교육, 사내교육, 현장교육(OJT) 구분 집계
-      if (budget.includes('공개교육') || budget.includes('공개연수')) {
+      // [버그 수정] '공개' 가 포함된 모든 예산(목)(예: KS교육(공개), 자격교육(공개) 등)을 공개교육으로 포괄 수용
+      if (budget.includes('공개') || budget.includes('공개연수')) {
         record.publicSales += r.salesAmount;
         if (mat) record.publicMaterials[mat] = (record.publicMaterials[mat] || 0) + 1;
-      } else if (budget.includes('사내교육') || budget.includes('위탁연수') || budget.includes('이러닝(사내)') || budget.includes('KS교육(사내)')) {
+      } else if (budget.includes('사내') || budget.includes('위탁연수') || budget.includes('이러닝(사내)')) {
         record.inhouseSales += r.salesAmount;
         if (mat) record.inhouseMaterials[mat] = (record.inhouseMaterials[mat] || 0) + 1;
-      } else if (budget.includes('현장교육') || budget.includes('OJT')) {
+      } else if (budget.includes('현장') || budget.includes('OJT')) {
         record.ojtSales += r.salesAmount;
         if (mat) record.ojtMaterials[mat] = (record.ojtMaterials[mat] || 0) + 1;
       }
@@ -368,7 +368,7 @@ export function ConsultingTab() {
           </div>
         </div>
 
-        {/* AI 분석 리포트 요약 카드 (지표 요약 박스 슬림화 및 텍스트 폰트 축소 적용) */}
+        {/* AI 분석 리포트 요약 카드 */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between xl:col-span-2">
           <div>
             <div className="flex items-center justify-between mb-4">
@@ -430,7 +430,7 @@ export function ConsultingTab() {
                 </p>
               )}
 
-              {/* 자재내역(품목)별 실적 추이 브리핑 (우뚝 섰습니다 표현 순화) */}
+              {/* 자재내역(품목)별 실적 추이 브리핑 */}
               {briefingReport.topMat && (
                 <p>
                   교육 사업 및 품목 단위(자재내역 기준) 분석 결과, 
@@ -606,7 +606,7 @@ export function ConsultingTab() {
           </div>
         </div>
 
-        {/* 제안 테이블 (1고객사당 1개 행 구성, 셀 내부 세부내역 중복 문자 '📋 세부 내역' 라벨 삭제) */}
+        {/* 제안 테이블 */}
         <div className="overflow-x-auto rounded-xl border border-slate-150">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -673,7 +673,7 @@ export function ConsultingTab() {
                       </div>
                     </td>
 
-                    {/* 4. 세부내역 (중복 라벨 텍스트 완전 배제) */}
+                    {/* 4. 세부내역 (중복 '📋 세부 내역' 라벨 삭제) */}
                     <td className="px-6 py-4">
                       <div className="flex flex-col gap-4">
                         
