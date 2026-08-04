@@ -19,17 +19,23 @@ export function ConsultingTab() {
     return years.length > 0 ? years : [2026, 2025, 2024];
   }, [salesData]);
 
-  // 기간 1 상태 설정 (기준 기간)
+  // 경영분석 브리핑 기간 설정 (기간 1 - 기준 기간)
   const [p1StartYear, setP1StartYear] = useState<number>(availableYears[1] || 2025);
   const [p1StartMonth, setP1StartMonth] = useState<number>(1);
   const [p1EndYear, setP1EndYear] = useState<number>(availableYears[1] || 2025);
   const [p1EndMonth, setP1EndMonth] = useState<number>(12);
 
-  // 기간 2 상태 설정 (대비 기간)
+  // 경영분석 브리핑 기간 설정 (기간 2 - 대비 기간)
   const [p2StartYear, setP2StartYear] = useState<number>(availableYears[0] || 2026);
   const [p2StartMonth, setP2StartMonth] = useState<number>(1);
   const [p2EndYear, setP2EndYear] = useState<number>(availableYears[0] || 2026);
   const [p2EndMonth, setP2EndMonth] = useState<number>(12);
+
+  // [신규 추가] 신규 사업 발굴 대상 전용 독자 조회 기간 필터 상태 설정 (기본값: 전체 기간)
+  const [recStartYear, setRecStartYear] = useState<number>(2021);
+  const [recStartMonth, setRecStartMonth] = useState<number>(1);
+  const [recEndYear, setRecEndYear] = useState<number>(2026);
+  const [recEndMonth, setRecEndMonth] = useState<number>(12);
 
   // 검색어 상태 및 교육 종류별 필터 조건 (있음:has, 없음:none, 전체:all)
   const [searchTerm, setSearchTerm] = useState('');
@@ -140,7 +146,17 @@ export function ConsultingTab() {
     };
   }, [salesData, p1StartYear, p1StartMonth, p1EndYear, p1EndMonth, p2StartYear, p2StartMonth, p2EndYear, p2EndMonth]);
 
-  // 2. 고객 분석 및 교육 종류별 과거 수강 이력(Top 5) 데이터 생성
+  // [신규 추가] 신규 사업 발굴 전용 기간 필터가 적용된 매출 데이터 추출
+  const filteredSalesForRec = useMemo(() => {
+    return salesData.filter(r => {
+      const recordVal = r.year * 100 + r.month;
+      const startVal = recStartYear * 100 + recStartMonth;
+      const endVal = recEndYear * 100 + recEndMonth;
+      return recordVal >= startVal && recordVal <= endVal;
+    });
+  }, [salesData, recStartYear, recStartMonth, recEndYear, recEndMonth]);
+
+  // 2. 고객 분석 및 교육 종류별 과거 수강 이력(Top 5) 데이터 생성 (신규 지정 기간 내 집계 적용)
   const recommendations = useMemo(() => {
     const customerRecords: Record<string, {
       customerName: string;
@@ -153,10 +169,10 @@ export function ConsultingTab() {
       ksCert: boolean;
       isoCert: boolean;
       isJeonbuk: boolean; // 관할지부 전북 여부
-      branchOffice: string; // [신규 추가] 화면 표시용 지부 명칭
+      branchOffice: string; // 화면 표시용 지부 명칭
     }> = {};
 
-    salesData.forEach(r => {
+    filteredSalesForRec.forEach(r => {
       if (!customerRecords[r.customerName]) {
         customerRecords[r.customerName] = {
           customerName: r.customerName,
@@ -187,7 +203,7 @@ export function ConsultingTab() {
       const budget = r.budgetType || '';
       const mat = r.materialDetails ? r.materialDetails.toString().trim() : '';
 
-      // [엄격 복원] 오직 예산목이 '공개교육'인 경우만 포함 (공개연수 및 기타 교육 제외)
+      // [엄격 제한] 오직 예산목이 '공개교육'인 경우만 포함 (공개연수 완전 배제)
       if (budget === '공개교육') {
         record.publicSales += r.salesAmount;
         if (mat) record.publicMaterials[mat] = (record.publicMaterials[mat] || 0) + 1;
@@ -240,7 +256,7 @@ export function ConsultingTab() {
 
     // 기본적으로 공개교육 매출이 많은 순으로 정렬
     return resultList.sort((a, b) => b.publicSales - a.publicSales);
-  }, [salesData]);
+  }, [filteredSalesForRec]);
 
   // 필터링된 추천 데이터
   const filteredRecs = useMemo(() => {
@@ -495,7 +511,7 @@ export function ConsultingTab() {
       {/* ===================== 신규 사업 발굴 대상 세션 ===================== */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
         
-        {/* 타이틀 및 검색 헤더 */}
+        {/* 타이틀 및 검색 헤더 (신규 조회 기간 필터 추가) */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-6">
           <div>
             <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
@@ -503,24 +519,65 @@ export function ConsultingTab() {
               신규 사업 발굴 대상
             </h3>
             <p className="text-xs text-slate-400 mt-1.5">
-              공개교육 수강 이력이 있는 기업 중 사내/OJT 도입 현황 및 인증 상태를 분석하여 미래의 교육/컨설팅 사업 기회를 발굴합니다.
+              공개교육 수강 이력이 있는 기업 중 사내/현장 도입 현황 및 인증 상태를 분석하여 미래의 교육/컨설팅 사업 기회를 발굴합니다.
             </p>
           </div>
 
-          {/* 검색 기능 */}
-          <div className="relative">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-            <input
-              type="text"
-              placeholder="고객사명 검색..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 pr-4 py-2 rounded-xl text-sm font-semibold border border-slate-200 bg-slate-50 text-slate-700 w-64 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            />
+          {/* 기간 설정 & 검색 기능 결합 배열 */}
+          <div className="flex flex-wrap items-center gap-4">
+            
+            {/* [신규 구현] 발굴 대상 전용 독자 기간 필터 */}
+            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600">
+              <span className="text-slate-400">조회 기간:</span>
+              <select
+                value={recStartYear}
+                onChange={(e) => {
+                  setRecStartYear(Number(e.target.value));
+                  if (recEndYear < Number(e.target.value)) setRecEndYear(Number(e.target.value));
+                }}
+                className="bg-transparent font-bold text-slate-800 focus:outline-none"
+              >
+                {availableYears.map(y => <option key={y} value={y}>{y}년</option>)}
+              </select>
+              <select
+                value={recStartMonth}
+                onChange={(e) => setRecStartMonth(Number(e.target.value))}
+                className="bg-transparent font-bold text-slate-800 focus:outline-none"
+              >
+                {Array.from({ length: 12 }, (_, i) => i + 1).map(m => <option key={m} value={m}>{m}월</option>)}
+              </select>
+              <span className="text-slate-400">~</span>
+              <select
+                value={recEndYear}
+                onChange={(e) => setRecEndYear(Number(e.target.value))}
+                className="bg-transparent font-bold text-slate-800 focus:outline-none"
+              >
+                {availableYears.filter(y => y >= recStartYear).map(y => <option key={y} value={y}>{y}년</option>)}
+              </select>
+              <select
+                value={recEndMonth}
+                onChange={(e) => setRecEndMonth(Number(e.target.value))}
+                className="bg-transparent font-bold text-slate-800 focus:outline-none"
+              >
+                {Array.from({ length: 12 }, (_, i) => i + 1).map(m => <option key={m} value={m}>{m}월</option>)}
+              </select>
+            </div>
+
+            {/* 검색창 */}
+            <div className="relative">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+              <input
+                type="text"
+                placeholder="고객사명 검색..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9 pr-4 py-2 rounded-xl text-sm font-semibold border border-slate-200 bg-slate-50 text-slate-700 w-48 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              />
+            </div>
           </div>
         </div>
 
-        {/* 4단 토글 필터 영역 (현장교육 명칭 간소화) */}
+        {/* 4단 토글 필터 영역 */}
         <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/80 mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
           
           {/* 공개교육 필터 */}
@@ -567,7 +624,7 @@ export function ConsultingTab() {
             </div>
           </div>
 
-          {/* 현장교육 필터 (명칭 변경) */}
+          {/* 현장교육 필터 */}
           <div className="space-y-2">
             <span className="text-xs font-bold text-slate-500 block">현장교육 이력</span>
             <div className="flex bg-slate-200/60 p-1 rounded-lg">
@@ -636,16 +693,25 @@ export function ConsultingTab() {
                       </div>
                     </td>
                     
-                    {/* 2. 인증현황 */}
+                    {/* 2. 인증현황 (KS 푸른색 배지 신설 및 ISO와 상하 수직 정렬 배치) */}
                     <td className="px-4 py-4 text-center">
-                      {item.isoCert ? (
-                        <span className="text-[11px] px-2.5 py-0.5 rounded-full font-bold bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center gap-1 w-24 mx-auto">
-                          <ShieldCheck className="w-3.5 h-3.5" />
-                          ISO 보유
-                        </span>
-                      ) : (
-                        <span className="text-slate-400 text-xs italic">-</span>
-                      )}
+                      <div className="flex flex-col gap-1.5 items-center justify-center">
+                        {item.ksCert && (
+                          <span className="text-[11px] px-2.5 py-0.5 rounded-full font-bold bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center gap-1 w-24 mx-auto">
+                            <ShieldCheck className="w-3.5 h-3.5 text-blue-500" />
+                            KS 보유
+                          </span>
+                        )}
+                        {item.isoCert && (
+                          <span className="text-[11px] px-2.5 py-0.5 rounded-full font-bold bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center gap-1 w-24 mx-auto">
+                            <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                            ISO 보유
+                          </span>
+                        )}
+                        {!item.ksCert && !item.isoCert && (
+                          <span className="text-slate-400 text-xs italic">-</span>
+                        )}
+                      </div>
                     </td>
 
                     {/* 3. 사업 구분 */}
@@ -679,14 +745,14 @@ export function ConsultingTab() {
                       </div>
                     </td>
 
-                    {/* 4. 세부내역 (각 사업구분 성격과 대응하는 음영 매칭 적용) */}
+                    {/* 4. 세부내역 (각 사업구분 성격과 대응하는 음영 매칭 및 max-w-none으로 한 줄 3개 이상 노출) */}
                     <td className="px-6 py-4">
                       <div className="flex flex-col gap-4">
                         
                         {/* 공개교육 세부내역 (파란색 음영 배지) */}
                         {item.publicSales > 0 && (
                           <div className="min-h-[4rem] flex flex-col justify-center gap-1">
-                            <div className="flex flex-wrap gap-1.5 max-w-md">
+                            <div className="flex flex-wrap gap-1.5 max-w-none">
                               {item.topPublicMaterials.map((mat) => (
                                 <span 
                                   key={mat.name} 
@@ -703,7 +769,7 @@ export function ConsultingTab() {
                         {/* 사내교육 세부내역 (초록색 음영 배지) */}
                         {item.inhouseSales > 0 && (
                           <div className="min-h-[4rem] flex flex-col justify-center gap-1">
-                            <div className="flex flex-wrap gap-1.5 max-w-md">
+                            <div className="flex flex-wrap gap-1.5 max-w-none">
                               {item.topInhouseMaterials.map((mat) => (
                                 <span 
                                   key={mat.name} 
@@ -720,7 +786,7 @@ export function ConsultingTab() {
                         {/* 현장교육 세부내역 (노란색 음영 배지) */}
                         {item.ojtSales > 0 && (
                           <div className="min-h-[4rem] flex flex-col justify-center gap-1">
-                            <div className="flex flex-wrap gap-1.5 max-w-md">
+                            <div className="flex flex-wrap gap-1.5 max-w-none">
                               {item.topOjtMaterials.map((mat) => (
                                 <span 
                                   key={mat.name} 
