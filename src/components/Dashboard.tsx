@@ -7,7 +7,8 @@ import { YearlyCompareChart } from './YearlyCompareChart';
 import { CustomerTrendChart } from './CustomerTrendChart';
 import { CompareTab } from './CompareTab';
 import { TreemapTab } from './TreemapTab';
-import { LayoutDashboard, Calendar, LayoutGrid } from 'lucide-react';
+import { ConsultingTab } from './ConsultingTab';
+import { LayoutDashboard, Calendar, LayoutGrid, Sparkles } from 'lucide-react';
 
 const WidgetWrapper = ({ children }: { children: React.ReactNode }) => (
   <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col relative group overflow-hidden h-full">
@@ -19,7 +20,7 @@ const WidgetWrapper = ({ children }: { children: React.ReactNode }) => (
 
 export const Dashboard: React.FC = () => {
   const { isInitialLoad, salesData } = useDashboard();
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'compare' | 'compare_treemap'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'compare' | 'compare_treemap' | 'consulting'>('dashboard');
 
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden font-sans">
@@ -75,6 +76,17 @@ export const Dashboard: React.FC = () => {
                   <LayoutGrid size={14} />
                   트리맵 비교
                 </button>
+                <button
+                  onClick={() => setActiveTab('consulting')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+                    activeTab === 'consulting'
+                      ? 'bg-white text-slate-900 shadow-sm'
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  <Sparkles size={14} className="text-indigo-500" />
+                  AI 경영분석 & 컨설팅 제안
+                </button>
               </div>
             )}
           </div>
@@ -112,10 +124,15 @@ export const Dashboard: React.FC = () => {
           <div className="flex-1 min-h-0 w-full bg-slate-50 p-4 overflow-y-auto custom-scrollbar">
             <CompareTab />
           </div>
-        ) : (
+        ) : activeTab === 'compare_treemap' ? (
           /* 트리맵 비교 탭 */
           <div className="flex-1 min-h-0 w-full bg-slate-50 overflow-hidden">
             <TreemapTab />
+          </div>
+        ) : (
+          /* AI 경영분석 & 컨설팅 제안 탭 */
+          <div className="flex-1 min-h-0 w-full bg-slate-50 p-6 overflow-y-auto custom-scrollbar">
+            <ConsultingTab />
           </div>
         )}
       </main>
