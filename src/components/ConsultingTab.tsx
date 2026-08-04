@@ -159,16 +159,16 @@ export function ConsultingTab() {
     });
   }, [salesData, recStartYear, recStartMonth, recEndYear, recEndMonth]);
 
-  // 2. 고객 분석 및 교육 종류별 과거 수강 이력(Top 5) 데이터 생성 (신규 지정 기간 내 집계 적용)
+  // 2. 고객 분석 및 교육 종류별 과거 수강 이력 데이터 생성 (연도별 그룹화 중첩 맵 적용)
   const recommendations = useMemo(() => {
     const customerRecords: Record<string, {
       customerName: string;
       publicSales: number;
       inhouseSales: number;
       ojtSales: number;
-      publicMaterials: Record<string, number>;
-      inhouseMaterials: Record<string, number>;
-      ojtMaterials: Record<string, number>;
+      publicMaterials: Record<number, Record<string, number>>;
+      inhouseMaterials: Record<number, Record<string, number>>;
+      ojtMaterials: Record<number, Record<string, number>>;
       ksCert: boolean;
       isoCert: boolean;
       isJeonbuk: boolean; // 관할지부 전북 여부
@@ -177,9 +177,12 @@ export function ConsultingTab() {
     }> = {};
 
     filteredSalesForRec.forEach(r => {
-      if (!customerRecords[r.customerName]) {
-        customerRecords[r.customerName] = {
-          customerName: r.customerName,
+      const trimmedName = String(r.customerName || '').trim();
+      if (!trimmedName) return;
+
+      if (!customerRecords[trimmedName]) {
+        customerRecords[trimmedName] = {
+          customerName: trimmedName,
           publicSales: 0,
           inhouseSales: 0,
           ojtSales: 0,
@@ -193,7 +196,7 @@ export function ConsultingTab() {
           memberStatus: '',
         };
       }
-      const record = customerRecords[r.customerName];
+      const record = customerRecords[trimmedName];
       if (r.ksCert) record.ksCert = true;
       if (r.isoCert) record.isoCert = true;
       
@@ -210,19 +213,31 @@ export function ConsultingTab() {
         record.memberStatus = r.memberStatus;
       }
 
+      const year = r.year;
       const budget = r.budgetType || '';
       const mat = r.materialDetails ? r.materialDetails.toString().trim() : '';
+      const salesAmt = r.salesAmount || 0;
+      const countDelta = salesAmt >= 0 ? 1 : -1; // 매출 취소인 경우 횟수를 상쇄(-1) 처리
 
       // [엄격 제한] 오직 예산목이 '공개교육'인 경우만 포함 (공개연수 완전 배제)
       if (budget === '공개교육') {
-        record.publicSales += r.salesAmount;
-        if (mat) record.publicMaterials[mat] = (record.publicMaterials[mat] || 0) + 1;
+        record.publicSales += salesAmt;
+        if (mat) {
+          if (!record.publicMaterials[year]) record.publicMaterials[year] = {};
+          record.publicMaterials[year][mat] = (record.publicMaterials[year][mat] || 0) + countDelta;
+        }
       } else if (budget.includes('사내교육') || budget.includes('위탁연수') || budget.includes('이러닝(사내)') || budget.includes('KS교육(사내)')) {
-        record.inhouseSales += r.salesAmount;
-        if (mat) record.inhouseMaterials[mat] = (record.inhouseMaterials[mat] || 0) + 1;
+        record.inhouseSales += salesAmt;
+        if (mat) {
+          if (!record.inhouseMaterials[year]) record.inhouseMaterials[year] = {};
+          record.inhouseMaterials[year][mat] = (record.inhouseMaterials[year][mat] || 0) + countDelta;
+        }
       } else if (budget.includes('현장교육') || budget.includes('OJT')) {
-        record.ojtSales += r.salesAmount;
-        if (mat) record.ojtMaterials[mat] = (record.ojtMaterials[mat] || 0) + 1;
+        record.ojtSales += salesAmt;
+        if (mat) {
+          if (!record.ojtMaterials[year]) record.ojtMaterials[year] = {};
+          record.ojtMaterials[year][mat] = (record.ojtMaterials[year][mat] || 0) + countDelta;
+        }
       }
     });
 
@@ -231,19 +246,27 @@ export function ConsultingTab() {
     for (const key in customerRecords) {
       const r = customerRecords[key];
 
-      // 대상 선별 기준: '공개교육' 수강 이력이 1회라도 있는 기업들 중심
-      const hasPublicEdu = r.publicSales > 0;
-      if (!hasPublicEdu) continue;
+      // 대상 선별 기준: 매출 실적이 1회라도 존재하는 모든 기업 대상 (제외 커트라인 제거)
+      const hasAnySales = r.publicSales > 0 || r.inhouseSales > 0 || r.ojtSales > 0;
+      if (!hasAnySales) continue;
 
+      const hasPublicEdu = r.publicSales > 0;
       const hasInHouseEdu = r.inhouseSales > 0;
       const hasOjt = r.ojtSales > 0;
 
-      // 항목별 과거 수강 이력 Top 5
-      const getTopFive = (materialsRecord: Record<string, number>) => {
+      // [신규 변경] 연도별 그룹화 가공기 (slice 제거로 전체 목록 노출)
+      const getGroupedMaterials = (materialsRecord: Record<number, Record<string, number>>) => {
         return Object.entries(materialsRecord)
-          .sort((a, b) => b[1] - a[1])
-          .slice(0, 5)
-          .map(([name, count]) => ({ name, count }));
+          .map(([yearStr, courses]) => {
+            const year = parseInt(yearStr, 10);
+            const courseList = Object.entries(courses)
+              .filter(([_, count]) => count > 0)
+              .sort((a, b) => b[1] - a[1]) // 수강 횟수 내림차순 정렬
+              .map(([name, count]) => ({ name, count }));
+            return { year, courseList };
+          })
+          .filter(group => group.courseList.length > 0)
+          .sort((a, b) => b.year - a.year); // 최신 연도가 맨 위에 정렬
       };
 
       resultList.push({
@@ -259,9 +282,9 @@ export function ConsultingTab() {
         publicSales: r.publicSales,
         inhouseSales: r.inhouseSales,
         ojtSales: r.ojtSales,
-        topPublicMaterials: getTopFive(r.publicMaterials),
-        topInhouseMaterials: getTopFive(r.inhouseMaterials),
-        topOjtMaterials: getTopFive(r.ojtMaterials),
+        topPublicMaterials: getGroupedMaterials(r.publicMaterials),
+        topInhouseMaterials: getGroupedMaterials(r.inhouseMaterials),
+        topOjtMaterials: getGroupedMaterials(r.ojtMaterials),
       });
     }
 
@@ -299,7 +322,7 @@ export function ConsultingTab() {
   return (
     <div className="animate-fade-in space-y-6 text-slate-700">
       
-      {/* ===================== [신규 구현] AI 경영분석 아코디언 헤더 바 ===================== */}
+      {/* ===================== AI 경영분석 아코디언 헤더 바 ===================== */}
       <div 
         onClick={() => setIsBriefingExpanded(!isBriefingExpanded)}
         className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition-all select-none"
@@ -465,7 +488,7 @@ export function ConsultingTab() {
               <div className="space-y-3.5 text-[13px] text-slate-600 leading-relaxed">
                 <p>
                   선택하신 기준 기간(P1: {p1StartYear}년 {p1StartMonth}월 ~ {p1EndYear}년 {p1EndMonth}월) 대비 
-                  비교 기간(P2: {p2StartYear}년 {p2StartMonth}월 ~ {p2EndYear}년 {p2EndMonth}월)의 매출 변화를 분석한 결과, 
+                  비교 기간(P2: {p2StartYear}년 {p2StartMonth}월 ~ {p2EndYear}년 {p2EndMonth}월)의 매출 변화을 분석한 결과, 
                   총매출액은 기존 <strong className="text-slate-800">{formatToThousand(briefingReport.rev1)}</strong>에서 
                   <strong className="text-slate-800"> {formatToThousand(briefingReport.rev2)}</strong>로 
                   <strong className={`mx-1 ${briefingReport.diff >= 0 ? 'text-blue-600' : 'text-red-600'}`}>{Math.abs(briefingReport.rate).toFixed(1)}% {briefingReport.diff >= 0 ? '상승' : '하락'}</strong>
@@ -544,7 +567,7 @@ export function ConsultingTab() {
         </div>
       )}
 
-      {/* ===================== 신규 사업 발굴 대상 세션 (언제나 고정) ===================== */}
+      {/* ===================== 신규 사업 발굴 대상 세션 ===================== */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
         
         {/* 타이틀 및 검색 헤더 (신규 조회 기간 필터 추가) */}
@@ -809,17 +832,33 @@ export function ConsultingTab() {
                           </span>
                         </td>
 
-                        {/* 4. 세부내역 */}
-                        <td className="px-6 py-4 align-middle border-r border-slate-100">
-                          <div className="flex flex-col gap-1.5 items-start">
-                            {row.materials.map((mat) => (
-                              <span 
-                                key={mat.name} 
-                                className={`inline-flex items-center px-2 py-0.5 rounded border text-[11px] font-medium ${row.badgeClass}`}
+                        {/* 4. 세부내역 (연도별 그룹화 및 스타일 리밸런싱 패치) */}
+                        <td className="pl-5 pr-6 py-4 align-middle border-r border-slate-100">
+                          <div className="flex flex-col gap-3">
+                            {row.materials.map((group, gIdx) => (
+                              <div 
+                                key={group.year} 
+                                className={`flex items-start gap-5 text-left w-full ${
+                                  gIdx > 0 ? 'border-t border-slate-100 pt-3' : ''
+                                }`}
                               >
-                                {mat.name}
-                                <span className={`ml-1 text-[9px] px-1 py-0.1 rounded font-extrabold ${row.countClass}`}>{mat.count}회</span>
-                              </span>
+                                {/* 연도 헤더 배지 (글자 크기를 text-[11px]로 확대하여 통일) */}
+                                <span className="text-[11px] font-extrabold px-2 py-0.5 rounded bg-slate-200/80 text-slate-600 shrink-0 mt-0.5 border border-slate-300/30">
+                                  {group.year}년
+                                </span>
+                                {/* 해당 연도 과정명 배지 목록 */}
+                                <div className="flex flex-col gap-1.5 items-start flex-1">
+                                  {group.courseList.map((mat) => (
+                                    <span 
+                                      key={mat.name} 
+                                      className={`inline-flex items-center px-2 py-0.5 rounded border text-[11px] font-medium ${row.badgeClass}`}
+                                    >
+                                      {mat.name}
+                                      <span className={`ml-1 text-[9px] px-1 py-0.1 rounded font-extrabold ${row.countClass}`}>{mat.count}회</span>
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
                             ))}
                           </div>
                         </td>
@@ -830,7 +869,7 @@ export function ConsultingTab() {
                             rowSpan={rowSpan} 
                             className="px-4 py-4 text-center align-middle"
                           >
-                            {item.memberStatus ? (
+                            {item.memberStatus && !item.memberStatus.includes('비회원') ? (
                               <span className="text-[11px] px-2.5 py-0.5 rounded-full font-bold bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center gap-1 w-24 mx-auto">
                                 회원사
                               </span>
