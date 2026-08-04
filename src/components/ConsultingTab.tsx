@@ -614,13 +614,13 @@ export function ConsultingTab() {
 
         {/* 제안 테이블 (4열 레이아웃: 고객사명 / 인증현황 / 사업 구분 / 세부내역, 가로 구분선 divide-slate-200/90 적용) */}
         <div className="overflow-x-auto rounded-xl border border-slate-200">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse table-fixed">
             <thead>
               <tr className="text-sm font-bold text-slate-600 bg-slate-50 border-b border-slate-200">
-                <th className="w-[25%] px-6 py-4">고객사명</th>
-                <th className="w-[15%] px-4 py-4 text-center">인증 현황</th>
-                <th className="w-[22%] px-6 py-4">사업 구분</th>
-                <th className="w-[38%] px-6 py-4">세부내역</th>
+                <th className="w-[18%] px-6 py-4">고객사명</th>
+                <th className="w-[10%] px-4 py-4 text-center">인증 현황</th>
+                <th className="w-[15%] px-6 py-4">사업 구분</th>
+                <th className="w-[57%] px-6 py-4">세부내역</th>
               </tr>
             </thead>
             <tbody className="text-sm divide-y divide-slate-200/90">
@@ -628,10 +628,10 @@ export function ConsultingTab() {
                 filteredRecs.map((item) => (
                   <tr key={item.customerName} className="hover:bg-slate-50/50 transition-colors">
                     
-                    {/* 1. 고객사명 (헤더와 폰트 크기 일치) */}
-                    <td className="px-6 py-4 font-semibold text-slate-800">
+                    {/* 1. 고객사명 (헤더와 폰트 크기 일치, break-keep 적용) */}
+                    <td className="px-6 py-4 font-semibold text-slate-800 break-keep">
                       <div className="flex items-center gap-2">
-                        <Building2 className="w-4 h-4 text-slate-400" />
+                        <Building2 className="w-4 h-4 text-slate-400 shrink-0" />
                         {item.customerName}
                       </div>
                     </td>
