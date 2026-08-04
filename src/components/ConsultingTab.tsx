@@ -153,6 +153,7 @@ export function ConsultingTab() {
       ksCert: boolean;
       isoCert: boolean;
       isJeonbuk: boolean; // 관할지부 전북 여부
+      branchOffice: string; // [신규 추가] 화면 표시용 지부 명칭
     }> = {};
 
     salesData.forEach(r => {
@@ -168,28 +169,32 @@ export function ConsultingTab() {
           ksCert: false,
           isoCert: false,
           isJeonbuk: false,
+          branchOffice: '',
         };
       }
       const record = customerRecords[r.customerName];
       if (r.ksCert) record.ksCert = true;
       if (r.isoCert) record.isoCert = true;
       
-      // 관할 컬럼 파싱값에 '전북'이 포함되어 있으면 전북 업체로 판별
-      if (r.branchOffice && r.branchOffice.includes('전북')) {
-        record.isJeonbuk = true;
+      // 관할지부 값 유지
+      if (r.branchOffice) {
+        record.branchOffice = r.branchOffice;
+        if (r.branchOffice.includes('전북')) {
+          record.isJeonbuk = true;
+        }
       }
 
       const budget = r.budgetType || '';
       const mat = r.materialDetails ? r.materialDetails.toString().trim() : '';
 
-      // [버그 수정] '공개' 가 포함된 모든 예산(목)(예: KS교육(공개), 자격교육(공개) 등)을 공개교육으로 포괄 수용
-      if (budget.includes('공개') || budget.includes('공개연수')) {
+      // [엄격 복원] 'KS교육(공개)' 등은 제외하고 오직 예산목에 '공개교육', '공개연수'만 포함되도록 원복
+      if (budget.includes('공개교육') || budget.includes('공개연수')) {
         record.publicSales += r.salesAmount;
         if (mat) record.publicMaterials[mat] = (record.publicMaterials[mat] || 0) + 1;
-      } else if (budget.includes('사내') || budget.includes('위탁연수') || budget.includes('이러닝(사내)')) {
+      } else if (budget.includes('사내교육') || budget.includes('위탁연수') || budget.includes('이러닝(사내)') || budget.includes('KS교육(사내)')) {
         record.inhouseSales += r.salesAmount;
         if (mat) record.inhouseMaterials[mat] = (record.inhouseMaterials[mat] || 0) + 1;
-      } else if (budget.includes('현장') || budget.includes('OJT')) {
+      } else if (budget.includes('현장교육') || budget.includes('OJT')) {
         record.ojtSales += r.salesAmount;
         if (mat) record.ojtMaterials[mat] = (record.ojtMaterials[mat] || 0) + 1;
       }
@@ -220,6 +225,7 @@ export function ConsultingTab() {
         ksCert: r.ksCert,
         isoCert: r.isoCert,
         isJeonbuk: r.isJeonbuk,
+        branchOffice: r.branchOffice || '-',
         hasPublicEdu,
         hasInHouseEdu,
         hasOjt,
@@ -251,7 +257,7 @@ export function ConsultingTab() {
       if (inhouseFilter === 'has' && !item.hasInHouseEdu) return false;
       if (inhouseFilter === 'none' && item.hasInHouseEdu) return false;
 
-      // 4. 현장교육(OJT) 필터 (O:has / X:none / 전체:all)
+      // 4. 현장교육 필터 (O:has / X:none / 전체:all)
       if (ojtFilter === 'has' && !item.hasOjt) return false;
       if (ojtFilter === 'none' && item.hasOjt) return false;
 
@@ -381,7 +387,7 @@ export function ConsultingTab() {
               </span>
             </div>
 
-            {/* 주요 지표 박스 (크기 및 폰트 슬림화) */}
+            {/* 주요 지표 박스 */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4.5">
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
                 <span className="text-[11px] font-semibold text-slate-500 block mb-0.5">기준 기간 매출 (P1)</span>
@@ -404,7 +410,7 @@ export function ConsultingTab() {
               </div>
             </div>
 
-            {/* 줄글 브리핑 리포트 (글자 크기 축소 및 단락 간격 조절로 스크롤 완전 방지) */}
+            {/* 줄글 브리핑 리포트 */}
             <div className="space-y-3.5 text-[13px] text-slate-600 leading-relaxed">
               <p>
                 선택하신 기준 기간(P1: {p1StartYear}년 {p1StartMonth}월 ~ {p1EndYear}년 {p1EndMonth}월) 대비 
@@ -514,7 +520,7 @@ export function ConsultingTab() {
           </div>
         </div>
 
-        {/* 4단 토글 필터 영역 */}
+        {/* 4단 토글 필터 영역 (현장교육 명칭 간소화) */}
         <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/80 mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
           
           {/* 공개교육 필터 */}
@@ -561,9 +567,9 @@ export function ConsultingTab() {
             </div>
           </div>
 
-          {/* 현장교육(OJT) 필터 */}
+          {/* 현장교육 필터 (명칭 변경) */}
           <div className="space-y-2">
-            <span className="text-xs font-bold text-slate-500 block">현장교육(OJT) 이력</span>
+            <span className="text-xs font-bold text-slate-500 block">현장교육 이력</span>
             <div className="flex bg-slate-200/60 p-1 rounded-lg">
               {(['all', 'has', 'none'] as const).map(option => (
                 <button
@@ -606,18 +612,19 @@ export function ConsultingTab() {
           </div>
         </div>
 
-        {/* 제안 테이블 */}
-        <div className="overflow-x-auto rounded-xl border border-slate-150">
+        {/* 제안 테이블 (5열 레이아웃: 고객사명 / 관할지부 / 인증현황 / 사업 구분 / 세부내역, 가로 구분선 divide-slate-200/90 적용) */}
+        <div className="overflow-x-auto rounded-xl border border-slate-200">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-50 border-b border-slate-150">
+              <tr className="text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-50 border-b border-slate-200">
                 <th className="px-6 py-4">고객사명</th>
+                <th className="px-6 py-4 text-center">관할지부</th>
                 <th className="px-6 py-4 text-center">인증 현황</th>
                 <th className="px-6 py-4">사업 구분</th>
                 <th className="px-6 py-4">세부내역</th>
               </tr>
             </thead>
-            <tbody className="text-sm divide-y divide-slate-100">
+            <tbody className="text-sm divide-y divide-slate-200/90">
               {filteredRecs.length > 0 ? (
                 filteredRecs.map((item) => (
                   <tr key={item.customerName} className="hover:bg-slate-50/50 transition-colors">
@@ -629,8 +636,13 @@ export function ConsultingTab() {
                         {item.customerName}
                       </div>
                     </td>
+
+                    {/* 2. [신규 추가] 관할지부 (디버깅 검증용 열) */}
+                    <td className="px-6 py-4 text-center font-semibold text-slate-700">
+                      {item.branchOffice}
+                    </td>
                     
-                    {/* 2. 인증현황 */}
+                    {/* 3. 인증현황 */}
                     <td className="px-6 py-4 text-center">
                       {item.isoCert ? (
                         <span className="text-[11px] px-2.5 py-0.5 rounded-full font-bold bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center gap-1 w-24 mx-auto">
@@ -642,7 +654,7 @@ export function ConsultingTab() {
                       )}
                     </td>
 
-                    {/* 3. 사업 구분 (금액 결합형 수직 병합) */}
+                    {/* 4. 사업 구분 (사내교육은 초록색(emerald) 적용, 현장교육은 표기 단순화) */}
                     <td className="px-6 py-4">
                       <div className="flex flex-col gap-4">
                         
@@ -656,7 +668,7 @@ export function ConsultingTab() {
 
                         {item.inhouseSales > 0 && (
                           <div className="min-h-[4rem] flex items-center">
-                            <span className="text-xs font-extrabold text-indigo-600 bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-lg">
+                            <span className="text-xs font-extrabold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-lg">
                               [사내교육] {formatToThousand(item.inhouseSales)}
                             </span>
                           </div>
@@ -665,7 +677,7 @@ export function ConsultingTab() {
                         {item.ojtSales > 0 && (
                           <div className="min-h-[4rem] flex items-center">
                             <span className="text-xs font-extrabold text-amber-600 bg-amber-50 border border-amber-100 px-2.5 py-1 rounded-lg">
-                              [현장교육(OJT)] {formatToThousand(item.ojtSales)}
+                              [현장교육] {formatToThousand(item.ojtSales)}
                             </span>
                           </div>
                         )}
@@ -673,7 +685,7 @@ export function ConsultingTab() {
                       </div>
                     </td>
 
-                    {/* 4. 세부내역 (중복 '📋 세부 내역' 라벨 삭제) */}
+                    {/* 5. 세부내역 (📋 세부 내역 라벨 완전 삭제) */}
                     <td className="px-6 py-4">
                       <div className="flex flex-col gap-4">
                         
@@ -711,7 +723,7 @@ export function ConsultingTab() {
                           </div>
                         )}
 
-                        {/* 현장교육(OJT) 세부내역 */}
+                        {/* 현장교육 세부내역 */}
                         {item.ojtSales > 0 && (
                           <div className="min-h-[4rem] flex flex-col justify-center gap-1">
                             <div className="flex flex-wrap gap-1.5 max-w-md">
@@ -735,7 +747,7 @@ export function ConsultingTab() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={4} className="px-6 py-10 text-center text-slate-400 font-medium bg-slate-50/20">
+                  <td colSpan={5} className="px-6 py-10 text-center text-slate-400 font-medium bg-slate-50/20">
                     조건에 일치하는 대상 기업이 존재하지 않습니다.
                   </td>
                 </tr>
