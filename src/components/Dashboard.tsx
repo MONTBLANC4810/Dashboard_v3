@@ -33,10 +33,10 @@ export const Dashboard: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-extrabold text-slate-800 tracking-tight">
-                2026년 전북지역본부 <span className="text-indigo-600">경영현황</span>
+                2026년 경영분석 & <span className="text-indigo-600">영업기회 발굴</span>
               </h1>
               <p className="text-slate-500 mt-1 text-sm">
-                실시간 매출 현황 및 목표 달성률 대시보드
+                경영현황 대시보드
               </p>
             </div>
 
