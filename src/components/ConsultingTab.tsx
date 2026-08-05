@@ -43,11 +43,14 @@ export function ConsultingTab() {
   // 검색어 상태 및 교육 종류별 필터 조건 (있음:has, 없음:none, 전체:all)
   const [searchTerm, setSearchTerm] = useState('');
   const [publicFilter, setPublicFilter] = useState<'all' | 'has' | 'none'>('has'); // 기본값: 공개교육 있음
-  const [inhouseFilter, setInhouseFilter] = useState<'all' | 'has' | 'none'>('all');
-  const [ojtFilter, setOjtFilter] = useState<'all' | 'has' | 'none'>('all');
+  const [inhouseFilter, setInhouseFilter] = useState<'all' | 'has' | 'none'>('none'); // 기본값: 사내교육 없음
+  const [ojtFilter, setOjtFilter] = useState<'all' | 'has' | 'none'>('none'); // 기본값: 현장교육 없음
   
   // 관할지부 전북 O/X 필터 상태 (전체:all, 전북임:yes, 전북아님:no)
-  const [jeonbukFilter, setJeonbukFilter] = useState<'all' | 'yes' | 'no'>('all');
+  const [jeonbukFilter, setJeonbukFilter] = useState<'all' | 'yes' | 'no'>('yes'); // 기본값: 전북 지부만
+
+  // [신규 추가] 설비윤활기술 과정 포함 여부 (기본값: false - 제외)
+  const [includeLubrication, setIncludeLubrication] = useState<boolean>(false);
 
   // 기간별 필터 함수
   const getPeriodData = (startYear: number, startMonth: number, endYear: number, endMonth: number) => {
@@ -155,9 +158,19 @@ export function ConsultingTab() {
       const recordVal = r.year * 100 + r.month;
       const startVal = recStartYear * 100 + recStartMonth;
       const endVal = recEndYear * 100 + recEndMonth;
-      return recordVal >= startVal && recordVal <= endVal;
+      const inDateRange = recordVal >= startVal && recordVal <= endVal;
+      if (!inDateRange) return false;
+
+      // 설비윤활기술 포함 여부 필터링 적용 (띄어쓰기 우회 대응을 위해 공백을 전면 제거하고 검사)
+      if (!includeLubrication && r.materialDetails) {
+        const cleanedCourse = r.materialDetails.toString().replace(/\s+/g, '');
+        if (cleanedCourse.includes('설비윤활기술')) {
+          return false;
+        }
+      }
+      return true;
     });
-  }, [salesData, recStartYear, recStartMonth, recEndYear, recEndMonth]);
+  }, [salesData, recStartYear, recStartMonth, recEndYear, recEndMonth, includeLubrication]);
 
   // 2. 고객 분석 및 교육 종류별 과거 수강 이력 데이터 생성 (연도별 그룹화 중첩 맵 적용)
   const recommendations = useMemo(() => {
@@ -636,12 +649,39 @@ export function ConsultingTab() {
           </div>
         </div>
 
-        {/* 4단 토글 필터 영역 */}
+        {/* 4단 토글 필터 영역 (설비윤활기술 미니 스위치를 공개교육 라벨 옆에 이식) */}
         <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/80 mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
           
-          {/* 공개교육 필터 */}
+          {/* 공개교육 필터 (설비윤활 미니 ON/OFF 토글을 우측에 통합) */}
           <div className="space-y-2">
-            <span className="text-xs font-bold text-slate-500 block">공개교육 이력</span>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-500">공개교육 이력</span>
+              
+              {/* 설비윤활 미니 ON/OFF 스위치 */}
+              <div className="flex items-center gap-0.5 text-[9px] font-bold text-slate-400 bg-slate-200/50 p-0.5 rounded border border-slate-300/10">
+                <span className="px-1 text-slate-500 scale-90">설비윤활</span>
+                <button
+                  onClick={() => setIncludeLubrication(true)}
+                  className={`px-1 py-0.2 rounded text-[9px] transition-all ${
+                    includeLubrication
+                      ? 'bg-white text-slate-900 shadow-sm font-extrabold'
+                      : 'text-slate-400 hover:text-slate-600'
+                  }`}
+                >
+                  ON
+                </button>
+                <button
+                  onClick={() => setIncludeLubrication(false)}
+                  className={`px-1 py-0.2 rounded text-[9px] transition-all ${
+                    !includeLubrication
+                      ? 'bg-rose-100 text-rose-700 border border-rose-200/50 font-extrabold shadow-sm'
+                      : 'text-slate-400 hover:text-slate-600'
+                  }`}
+                >
+                  OFF
+                </button>
+              </div>
+            </div>
             <div className="flex bg-slate-200/60 p-1 rounded-lg">
               {(['all', 'has', 'none'] as const).map(option => (
                 <button
@@ -654,7 +694,7 @@ export function ConsultingTab() {
                   }`}
                 >
                   {option === 'all' && '전체'}
-                  {option === 'has' && 'O (기본)'}
+                  {option === 'has' && 'O'}
                   {option === 'none' && 'X'}
                 </button>
               ))}
