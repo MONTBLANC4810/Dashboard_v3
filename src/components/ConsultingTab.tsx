@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react';
 import { useDashboard } from '../context/DashboardContext';
 import { formatPercent } from '../utils/format';
-import { Building2, BookOpen, ArrowRightLeft, Sparkles, Search, HelpCircle, ShieldCheck, ChevronDown, ChevronUp } from 'lucide-react';
+import { Building2, BookOpen, ArrowRightLeft, Sparkles, Search, HelpCircle, ShieldCheck, ChevronDown, ChevronUp, FileSpreadsheet } from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 // 숫자를 천원 단위 표기로 변환하는 포맷터 함수
 function formatToThousand(value: number): string {
@@ -332,6 +333,85 @@ export function ConsultingTab() {
     });
   }, [recommendations, searchTerm, publicFilter, inhouseFilter, ojtFilter, jeonbukFilter]);
 
+  // [신규 추가] 신규 사업 발굴 대상 테이블 데이터를 엑셀로 다운로드하는 핸들러
+  const handleDownloadExcel = () => {
+    const excelData = filteredRecs.flatMap(item => {
+      const activeRows = [];
+      if (item.publicSales > 0) {
+        activeRows.push({
+          label: '공개교육',
+          sales: item.publicSales,
+          materials: item.topPublicMaterials,
+        });
+      }
+      if (item.inhouseSales > 0) {
+        activeRows.push({
+          label: '사내교육',
+          sales: item.inhouseSales,
+          materials: item.topInhouseMaterials,
+        });
+      }
+      if (item.ojtSales > 0) {
+        activeRows.push({
+          label: '현장교육',
+          sales: item.ojtSales,
+          materials: item.topOjtMaterials,
+        });
+      }
+
+      return activeRows.map(row => {
+        // 세부내역 줄글 가공: "2026년: 과정명 (1회) | 2025년: 과정명 (2회)"
+        const detailsStr = row.materials.map(group => {
+          const courses = group.courseList.map(c => `${c.name} (${c.count}회)`).join(', ');
+          return `${group.year}년: ${courses}`;
+        }).join(' | ');
+
+        // 인증 상태
+        const certs = [];
+        if (item.ksCert) certs.push('KS 보유');
+        if (item.isoCert) certs.push('ISO 보유');
+        const certsStr = certs.join(', ') || '-';
+
+        // 회원 상태
+        const memberStr = item.memberStatus && !item.memberStatus.includes('비회원') ? '회원사' : '-';
+
+        return {
+          '고객사명': item.customerName,
+          '사업 구분': `[${row.label}] ${formatToThousand(row.sales)}`,
+          '세부내역': detailsStr,
+          '인증 현황': certsStr,
+          '비고': memberStr,
+        };
+      });
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, '신규 사업 발굴 대상');
+
+    // 열 너비 자동 보정
+    const maxLen = excelData.reduce((w, r) => {
+      return {
+        '고객사명': Math.max(w['고객사명'], String(r['고객사명'] || '').length),
+        '사업 구분': Math.max(w['사업 구분'], String(r['사업 구분'] || '').length),
+        '세부내역': Math.max(w['세부내역'], String(r['세부내역'] || '').length),
+        '인증 현황': Math.max(w['인증 현황'], String(r['인증 현황'] || '').length),
+        '비고': Math.max(w['비고'], String(r['비고'] || '').length),
+      };
+    }, { '고객사명': 10, '사업 구분': 10, '세부내역': 15, '인증 현황': 10, '비고': 10 });
+
+    worksheet['!cols'] = [
+      { wch: Math.min(maxLen['고객사명'] * 2 + 4, 40) },
+      { wch: Math.min(maxLen['사업 구분'] * 2 + 4, 30) },
+      { wch: Math.min(maxLen['세부내역'] * 2 + 4, 100) },
+      { wch: Math.min(maxLen['인증 현황'] * 2 + 4, 25) },
+      { wch: Math.min(maxLen['비고'] * 2 + 4, 20) },
+    ];
+
+    const todayStr = new Date().toISOString().slice(0, 10);
+    XLSX.writeFile(workbook, `신규_사업_발굴_대상_${todayStr}.xlsx`);
+  };
+
   return (
     <div className="animate-fade-in space-y-6 text-slate-700">
       
@@ -634,6 +714,16 @@ export function ConsultingTab() {
                 {Array.from({ length: 12 }, (_, i) => i + 1).map(m => <option key={m} value={m}>{m}월</option>)}
               </select>
             </div>
+
+            {/* [신규 추가] 엑셀 다운로드 버튼 */}
+            <button
+              onClick={handleDownloadExcel}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-all shadow-sm"
+              title="현재 조회된 테이블 목록을 엑셀로 다운로드합니다"
+            >
+              <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+              엑셀 다운로드
+            </button>
 
             {/* 검색창 */}
             <div className="relative">
