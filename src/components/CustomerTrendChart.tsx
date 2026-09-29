@@ -232,7 +232,7 @@ export const CustomerTrendChart: React.FC = () => {
                 <thead className="bg-slate-50 sticky top-0 shadow-sm z-10 w-full">
                   <tr>
                     <th className="px-4 py-2 font-semibold text-slate-600 border-b border-slate-200 w-[26%]">고객명</th>
-                    <th className="px-4 py-2 font-semibold text-slate-600 border-b border-slate-200 w-[20%]">부서(손익센터/이름)</th>
+                    <th className="px-4 py-2 font-semibold text-slate-600 border-b border-slate-200 w-[20%]">사업부서명</th>
                     <th className="px-4 py-2 font-semibold text-slate-600 border-b border-slate-200 w-[30%]">대표 사업코드명 / 자재내역</th>
                     <th className="px-4 py-2 font-semibold text-slate-600 text-right border-b border-slate-200 w-[24%]">매출계 / 매출액</th>
                   </tr>

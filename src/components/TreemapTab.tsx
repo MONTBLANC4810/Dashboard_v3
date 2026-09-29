@@ -557,7 +557,7 @@ export function TreemapTab() {
 
         <div className="p-4 overflow-y-auto flex-1 min-h-0 bg-slate-50/50 custom-scrollbar pr-2">
           {/* 사업부서명 */}
-          {renderSidebarCheckboxGroup("사업부서명 (손익센터/이름)", uniqueValues.departments, selectedDepts, setSelectedDepts)}
+          {renderSidebarCheckboxGroup("사업부서명", uniqueValues.departments, selectedDepts, setSelectedDepts)}
 
           {/* 예산 (목) */}
           {renderSidebarCheckboxGroup("사업범주 / 예산(목)", uniqueValues.budgetTypes, selectedBudgets, setSelectedBudgets)}
@@ -832,7 +832,7 @@ export function TreemapTab() {
                           className="px-3 py-2 font-semibold text-slate-600 border-b border-slate-200 w-[25%] cursor-pointer hover:bg-slate-100 transition-colors select-none"
                         >
                           <div className="flex items-center">
-                            부서(손익센터/이름) {getSortIcon('department', sortKey1, sortDir1)}
+                            사업부서명 {getSortIcon('department', sortKey1, sortDir1)}
                           </div>
                         </th>
                         <th className="px-3 py-2 font-semibold text-slate-600 border-b border-slate-200 w-[30%] select-none">대표 사업코드명 / 자재내역</th>
@@ -976,7 +976,7 @@ export function TreemapTab() {
                             className="px-3 py-2 font-semibold text-slate-600 border-b border-slate-200 w-[25%] cursor-pointer hover:bg-slate-100 transition-colors select-none"
                           >
                             <div className="flex items-center">
-                              부서(손익센터/이름) {getSortIcon('department', sortKey2, sortDir2)}
+                              사업부서명 {getSortIcon('department', sortKey2, sortDir2)}
                             </div>
                           </th>
                           <th className="px-3 py-2 font-semibold text-slate-600 border-b border-slate-200 w-[30%] select-none">대표 사업코드명 / 자재내역</th>

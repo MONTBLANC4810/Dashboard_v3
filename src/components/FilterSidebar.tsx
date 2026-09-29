@@ -198,7 +198,7 @@ export const FilterSidebar: React.FC = () => {
 
         {renderCheckboxGroup("연도", uniqueValues.years, "years")}
         {renderCheckboxGroup("월", uniqueValues.months, "months")}
-        {renderCheckboxGroup("사업부서명 (손익센터/이름)", uniqueValues.departments, "departments")}
+        {renderCheckboxGroup("사업부서명", uniqueValues.departments, "departments")}
         {renderCheckboxGroup("사업범주 / 예산(목)", uniqueValues.budgetTypes, "budgetTypes")}
         
         <div className="mb-6">
