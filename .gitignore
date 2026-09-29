@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# 로컬 매출 데이터 파일
+*.XLS
+*.xls
+*.xlsx
+*.csv
+*.CSV
